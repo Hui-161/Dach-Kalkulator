@@ -1262,11 +1262,15 @@ function calcHauptdachStandalone(inp) {
 
   // Anzahl Sparren: IMMER die Satteldach-Formel (Excel G22)
   // -> (L + 2*UE) / SA aufgerundet, +1, dann mal 2 (beide Dachseiten)
-  const anzSparren = (ru((L + 2*UE) / SA) + 1) * 2;
+  const anzSparrenBerechnet = (ru((L + 2*UE) / SA) + 1) * 2;
 
   // Anzahl Schifter: NUR beim Walmdach, und NUR für Traufausklinkung
   // Excel L23 = ROUNDUP(((B/2)/SA)*4*2, 0)
   const anzSchifter = isSattel ? 0 : ru(((B/2)/SA) * 4 * 2);
+
+  // Sicherheitszuschlag: +2 Sparren beim Walmdach (Verschnitt/Reserve bei
+  // komplexerer Geometrie mit Gratsparren/Schiftern).
+  const anzSparren = anzSparrenBerechnet + (isSattel ? 0 : 2);
 
   // ===== SPARREN (Hauptbauteil — inkl. Schifter in der Masse) =====
   const sparrenEinzel = (B + 2*UE) / (2 * Math.cos(rad(inp.neigung)));
@@ -1325,9 +1329,17 @@ function calcHauptdachStandalone(inp) {
   qsList.push({...inp.qs_fusspfette, lfm: fuGes/100, vol: fuVol});
 
   // Zangen
+  // Formel: Länge = MAX((B/2 + ÜE − (WR − DR)/tan(N)) × 2, 0)
+  // Erweiterte Variante der Excel-Formel E47: Berücksichtigt zusätzlich den
+  // Dachüberstand. Geometrischer Hintergrund: Die Sparren-Unterkante kreuzt
+  // die Drempelebene am Traufpunkt (bei x=−ÜE), nicht an der Mauerkante.
+  // Diese Variante stimmt mit CAD-Konstruktionen überein; die ursprüngliche
+  // Excel-Formel unterschätzte die Zangenlänge um 2×ÜE (horizontal projiziert).
   let zangenHinweis = null;
   if (inp.zangen) {
-    const zLroh = ((B/2) - ((inp.wr - inp.drempel) / Math.tan(rad(inp.neigung))))*2;
+    const deltaH = inp.wr - inp.drempel;              // vertikaler Abstand
+    const horizEinruecken = deltaH / Math.tan(rad(inp.neigung)); // wie weit das Dach auf WR-Höhe innen liegt
+    const zLroh = (B/2 + UE - horizEinruecken) * 2;
     const zL = Math.max(zLroh, 0);
     const zAnz = Math.max(Math.floor(anzSparren/2 - 2), 0) * doppeltZ;
     const zGes = zL * zAnz;
@@ -1337,9 +1349,10 @@ function calcHauptdachStandalone(inp) {
                 bsh: inp.qs_zangen.sk==='BSH'?zVol:0 });
     qsList.push({...inp.qs_zangen, lfm: zGes/100, vol: zVol});
     if (zLroh <= 0) {
-      zangenHinweis = `Zange = 0 m: Drempel zu niedrig für gewählte Neigung. Das Dach schneidet die Wohnraumhöhe (${inp.wr} cm) unterhalb der Breite. Drempel erhöhen oder Neigung/Breite anpassen.`;
+      zangenHinweis = `Zange = 0 m: Drempel zu niedrig für gewählte Neigung. ` +
+        `Drempel erhöhen, Neigung steiler oder Wohnraumhöhe niedriger.`;
     } else if (zAnz === 0) {
-      zangenHinweis = `Zange hat Länge, aber Anzahl = 0 (zu wenige Sparren: ${anzSparren}). Bei sehr kleinen Dächern gibt es keine Innen-Sparren für Zangen.`;
+      zangenHinweis = `Zange hat Länge, aber Anzahl = 0 (zu wenige Sparren: ${anzSparren}).`;
     }
   }
 
@@ -1385,7 +1398,10 @@ function calcHauptdachMitWinkelbau(inp) {
   // Walm:   anz = ROUNDUP((L - wbB + UE - B/2)/SA)*2
   const anzSparrenA_sattel = ru((L - wbB + UE) / SA) * 2;
   const anzSparrenA_walm   = ru((L - wbB + UE - B/2) / SA) * 2;
-  const anzSparrenA = Math.max(isSattel ? anzSparrenA_sattel : anzSparrenA_walm, 2);
+  // Sicherheitszuschlag: +2 Sparren pro Schenkel im Winkelbau-Modus (Reserve
+  // für komplexere Geometrie mit Kehlen/Graten).
+  const anzSparrenA_roh = Math.max(isSattel ? anzSparrenA_sattel : anzSparrenA_walm, 2);
+  const anzSparrenA = anzSparrenA_roh + 2;
 
   // Schifter [a] (von Hauptdach Richtung Gratsparren/Winkelbau)
   // Sattel: ROUNDUP((wbB + UE)/SA)  -- Anzahl Schifter auf der WB-Seite
@@ -1396,8 +1412,9 @@ function calcHauptdachMitWinkelbau(inp) {
   const anzSchifterA_walm_n = ru((wbB + UE) / SA);
   const anzSchifterA = isSattel ? anzSchifterA_sattel : (anzSchifterA_walm_m + anzSchifterA_walm_n);
 
-  // Sparren [b] -- Schenkel b = Winkelbau
-  const anzSparrenB = Math.max(ru((wbL - B + UE) / SA) * 2, 2);
+  // Sparren [b] -- Schenkel b = Winkelbau (ebenfalls +2 Sicherheitszuschlag)
+  const anzSparrenB_roh = Math.max(ru((wbL - B + UE) / SA) * 2, 2);
+  const anzSparrenB = anzSparrenB_roh + 2;
   const anzSchifterB_sattel = ru((B + UE) / SA);
   const anzSchifterB_walm_m = ru((wbB + 2*UE) / SA) + ru((wbB/2 + UE) / SA) * 2;
   const anzSchifterB_walm_n = ru((B + UE) / SA);
@@ -1525,9 +1542,12 @@ function calcHauptdachMitWinkelbau(inp) {
   qsList.push({...inp.qs_fusspfette, lfm: fuGes/100, vol: fu_vol});
 
   // ===== Zangen [a] und [b] =====
+  // Formel: Länge = MAX((B/2 + ÜE − (WR − DR)/tan(N)) × 2, 0)
+  // Berücksichtigt Dachüberstand (siehe Standalone-Funktion für Herleitung).
   let zangenHinweis = null;
   if (inp.zangen) {
-    const zLaRoh = ((B/2) - ((inp.wr - inp.drempel) / Math.tan(rad(N))))*2;
+    const deltaH = inp.wr - inp.drempel;
+    const zLaRoh = (B/2 + UE - deltaH / Math.tan(rad(N))) * 2;
     const zLa = Math.max(zLaRoh, 0);
     // Excel: H64 = G64 * G71/2 * doppelt  (also nur halbe Sparrenanzahl, nicht /2 - 2)
     const zAnzA = Math.max(Math.floor(anzSparrenA/2), 0) * doppeltZ;
@@ -1538,7 +1558,7 @@ function calcHauptdachMitWinkelbau(inp) {
                 bsh: inp.qs_zangen.sk==='BSH'?zVolA:0 });
     qsList.push({...inp.qs_zangen, lfm: zGesA/100, vol: zVolA});
 
-    const zLbRoh = ((wbB/2) - ((inp.wr - inp.drempel) / Math.tan(rad(wbN))))*2;
+    const zLbRoh = (wbB/2 + UE - deltaH / Math.tan(rad(wbN))) * 2;
     const zLb = Math.max(zLbRoh, 0);
     const zAnzB = Math.max(Math.floor(anzSparrenB/2), 0) * doppeltZ;
     const zGesB = zLb * zAnzB;
@@ -1940,7 +1960,8 @@ function svgSchnitt(inp, haupt) {
 
   // ===== ZANGE (auf Wohnraumhöhe) =====
   if (inp.zangen) {
-    const zLroh = ((B/2) - ((WR - DR)/Math.tan(rad(N))))*2;
+    // Formel wie in calcHauptdachStandalone: mit Dachüberstand im Bezug
+    const zLroh = ((B/2 + UE) - ((WR - DR)/Math.tan(rad(N))))*2;
     const zLen = Math.max(zLroh, 0);
     if (zLen > 0) {
       const zStart = UE + B/2 - zLen/2;
@@ -2096,10 +2117,70 @@ function calculate() {
   const totalKvh = hSum.sumKvh + a1Sum.sumKvh + a2Sum.sumKvh + eSum.sumKvh;
   const totalBsh = hSum.sumBsh + a1Sum.sumBsh + a2Sum.sumBsh + eSum.sumBsh;
 
-  // Flächen
-  const grundflaeche = (inp.laenge * inp.breite) / 10000; // m²
-  const sparrenEinzel = (inp.breite + 2*inp.ue) / (2*Math.cos(rad(inp.neigung)));
-  const dachflaeche = ((inp.laenge + 2*inp.ue) * sparrenEinzel * 2) / 10000;
+  // =====================================================================
+  // GRUNDFLÄCHE (horizontale Projektion, m²)
+  //
+  // Hauptdach:  L × B (in cm² / 10000 -> m²)
+  // Winkelbau:  startet am selben Eck wie das Hauptdach (Skizze-Konvention).
+  //             Winkelbau-Rechteck = wbL × wbB. Er überlappt mit dem Hauptdach
+  //             im Bereich min(B,wbL) × min(L,wbB). Für die Grundfläche
+  //             rechnen wir nur den NICHT-überlappenden Teil dazu.
+  //             => Zusatzfläche = wbL·wbB − overlap
+  // Anbauten:   separate Rechtecke an den Traufseiten, keine Überlappung
+  //             mit Hauptdach (Anbau beginnt AN der Traufe, nicht darin).
+  //             => je Anbau: a1L · a1B  bzw.  a2L · a2B
+  // =====================================================================
+  let grundflaecheCm2 = inp.laenge * inp.breite;
+  if (inp.winkelbau) {
+    const overlap = Math.min(inp.breite, inp.wb_laenge) * Math.min(inp.laenge, inp.wb_breite);
+    grundflaecheCm2 += (inp.wb_laenge * inp.wb_breite) - overlap;
+  }
+  if (inp.anbauten_anzahl >= 1) grundflaecheCm2 += inp.a1.laenge * inp.a1.breite;
+  if (inp.anbauten_anzahl >= 2) grundflaecheCm2 += inp.a2.laenge * inp.a2.breite;
+  const grundflaeche = grundflaecheCm2 / 10000; // m²
+
+  // =====================================================================
+  // DACHFLÄCHE (schräge Fläche, m²)
+  //
+  // Annahme: Satteldach. Dachfläche = 2 × (Länge+2·ÜE) × Sparrenlänge
+  //   weil das Dach auf beiden Seiten vom First zur Traufe schräg abfällt.
+  //   Sparrenlänge = (B+2·ÜE) / (2 · cos(Neigung))
+  //   Also: Dachfläche = (L+2·ÜE) · 2 · (B+2·ÜE) / (2·cos(N))
+  //                    = (L+2·ÜE) · (B+2·ÜE) / cos(N)
+  //   Beim Walmdach ist die Fläche geometrisch identisch (Hütdach auf
+  //   gleiche Grundfläche mit gleicher Neigung = gleiche Dachfläche).
+  //
+  // Hauptdach + Winkelbau: analog zur Grundfläche aufsummieren, Overlap
+  //   abziehen (in cm² -> m²).
+  // Anbauten: eigene Dachflächen nach gleicher Formel mit ihrer Neigung
+  //   und ihren Maßen.
+  // =====================================================================
+  function dachflaecheCm2(L, B, UE, N) {
+    // geometrische Dachfläche in cm² für einen Satteldach-artigen Körper
+    return (L + 2*UE) * (B + 2*UE) / Math.cos(rad(N));
+  }
+
+  let dachflaecheSumme = dachflaecheCm2(inp.laenge, inp.breite, inp.ue, inp.neigung);
+  if (inp.winkelbau) {
+    // Dachfläche über dem überlappenden Grundriss-Bereich wird durch einen
+    // der beiden Schenkel abgedeckt. Der Hauptdach-Teil rechnet bereits
+    // seine gesamte überstreifte Länge. Für den Winkelbau-Anteil nur den
+    // NICHT-überlappenden Grundriss-Teil anteilig hinzufügen:
+    //   WB-Dachfläche gesamt = (wbL+2·UE) · (wbB+2·UE) / cos(wbN)
+    //   anteilig nur die Fläche über (wbL·wbB − overlap) der Grundfläche
+    const wbGes = dachflaecheCm2(inp.wb_laenge, inp.wb_breite, inp.ue, inp.wb_neigung);
+    const wbGrund = inp.wb_laenge * inp.wb_breite;
+    const overlap = Math.min(inp.breite, inp.wb_laenge) * Math.min(inp.laenge, inp.wb_breite);
+    const anteilNichtOverlap = wbGrund > 0 ? (wbGrund - overlap) / wbGrund : 0;
+    dachflaecheSumme += wbGes * anteilNichtOverlap;
+  }
+  if (inp.anbauten_anzahl >= 1) {
+    dachflaecheSumme += dachflaecheCm2(inp.a1.laenge, inp.a1.breite, inp.a1.ue, inp.a1.neigung);
+  }
+  if (inp.anbauten_anzahl >= 2) {
+    dachflaecheSumme += dachflaecheCm2(inp.a2.laenge, inp.a2.breite, inp.a2.ue, inp.a2.neigung);
+  }
+  const dachflaeche = dachflaecheSumme / 10000; // m²
 
   // Dachform für Projektplattform (Walm wenn irgendwo Walm oder L-Form)
   let plattform = 'Satteldach';

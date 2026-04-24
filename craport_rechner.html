@@ -1,0 +1,2589 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carport-Kalkulator</title>
+<style>
+/* ============================================================
+   CSS-VARIABLEN / THEME
+   ============================================================ */
+:root {
+  --bg:          #eef2f6;
+  --bg-elev:     #ffffff;
+  --bg-sub:      #f7f9fc;
+  --border:      #d6dde5;
+  --text:        #1f2937;
+  --text-muted:  #64748b;
+  --heading:     #1e3a5f;
+  --accent:      #e67e22;
+  --accent-hov:  #d35400;
+  --success:     #059669;
+  --danger:      #dc2626;
+  --shadow:      0 2px 4px rgba(0,0,0,0.08);
+  --shadow-lg:   0 4px 12px rgba(0,0,0,0.12);
+  --header-grad1:#1e3a5f;
+  --header-grad2:#2c5282;
+  --input-bg:    #ffffff;
+  --input-focus: rgba(230,126,34,0.15);
+  --label:       #334155;
+  --sum-bg:      #fff4e6;
+  --sum-border:  var(--accent);
+  --code-bg:     #f1f5f9;
+
+  /* Viz-Farben (für spätere Kompatibilität beibehalten) */
+  --viz-hauptdach: #dc2626;
+  --viz-pfosten:   #475569;
+  --viz-pfette:    #78350f;
+  --viz-sparren:   #d97706;
+  --viz-kopfband:  #0891b2;
+  --viz-wand:      #14b8a6;
+  --viz-mass:      #64748b;
+  --viz-fill:      #f8fafc;
+  --viz-grid:      #e2e8f0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:          #0f172a;
+    --bg-elev:     #1e293b;
+    --bg-sub:      #1a2332;
+    --border:      #334155;
+    --text:        #e2e8f0;
+    --text-muted:  #94a3b8;
+    --heading:     #93c5fd;
+    --accent:      #fb923c;
+    --accent-hov:  #f97316;
+    --success:     #34d399;
+    --danger:      #f87171;
+    --header-grad1:#0f172a;
+    --header-grad2:#1e3a5f;
+    --input-bg:    #0f172a;
+    --input-focus: rgba(251,146,60,0.2);
+    --label:       #cbd5e1;
+    --sum-bg:      #2a1e12;
+    --code-bg:     #0f172a;
+
+    --viz-hauptdach: #f87171;
+    --viz-pfosten:   #94a3b8;
+    --viz-pfette:    #fbbf24;
+    --viz-sparren:   #fb923c;
+    --viz-kopfband:  #22d3ee;
+    --viz-wand:      #2dd4bf;
+    --viz-mass:      #94a3b8;
+    --viz-fill:      #1e293b;
+    --viz-grid:      #334155;
+  }
+}
+
+[data-theme="dark"] {
+  --bg:          #0f172a;
+  --bg-elev:     #1e293b;
+  --bg-sub:      #1a2332;
+  --border:      #334155;
+  --text:        #e2e8f0;
+  --text-muted:  #94a3b8;
+  --heading:     #93c5fd;
+  --accent:      #fb923c;
+  --accent-hov:  #f97316;
+  --success:     #34d399;
+  --danger:      #f87171;
+  --header-grad1:#0f172a;
+  --header-grad2:#1e3a5f;
+  --input-bg:    #0f172a;
+  --input-focus: rgba(251,146,60,0.2);
+  --label:       #cbd5e1;
+  --sum-bg:      #2a1e12;
+  --code-bg:     #0f172a;
+
+  --viz-hauptdach: #f87171;
+  --viz-pfosten:   #94a3b8;
+  --viz-pfette:    #fbbf24;
+  --viz-sparren:   #fb923c;
+  --viz-kopfband:  #22d3ee;
+  --viz-wand:      #2dd4bf;
+  --viz-mass:      #94a3b8;
+  --viz-fill:      #1e293b;
+  --viz-grid:      #334155;
+}
+
+/* ============================================================
+   GRUND-LAYOUT
+   ============================================================ */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+header.app-header {
+  background: linear-gradient(135deg, var(--header-grad1), var(--header-grad2));
+  color: #fff;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-logo {
+  width: 40px; height: 40px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #fff;
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.1; }
+.brand-text .title { font-size: 18px; font-weight: 700; }
+.brand-text .subtitle { font-size: 12px; opacity: 0.8; }
+
+.theme-switcher {
+  display: flex;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  padding: 2px;
+}
+.theme-switcher button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: inherit;
+  opacity: 0.7;
+}
+.theme-switcher button.active {
+  background: rgba(255,255,255,0.2);
+  opacity: 1;
+}
+.theme-switcher button:hover { opacity: 1; }
+
+main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+@media (min-width: 1024px) {
+  main { grid-template-columns: minmax(360px, 1fr) minmax(500px, 1.3fr); }
+}
+
+.column { display: flex; flex-direction: column; gap: 16px; }
+
+/* ============================================================
+   AKKORDEON (Eingabe)
+   ============================================================ */
+.accordion {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+.acc-section { border-bottom: 1px solid var(--border); }
+.acc-section:last-child { border-bottom: none; }
+.acc-section.active { border-left: 3px solid var(--accent); }
+
+.acc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  background: var(--bg-sub);
+  font-weight: 600;
+  color: var(--heading);
+}
+.acc-header:hover { background: var(--bg-elev); }
+.acc-header .arrow {
+  transition: transform 0.2s;
+  font-size: 12px;
+  opacity: 0.6;
+}
+.acc-section.open .acc-header .arrow { transform: rotate(180deg); }
+.acc-section.open .acc-header { background: var(--bg-elev); }
+
+.acc-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+.acc-section.open .acc-body {
+  max-height: 3000px;
+  transition: max-height 0.4s ease;
+}
+.acc-body-inner { padding: 16px; }
+
+.badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+/* ============================================================
+   FORMULAR
+   ============================================================ */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid.cols-1 { grid-template-columns: 1fr; }
+.form-grid .full { grid-column: 1 / -1; }
+
+.field label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--label);
+  font-weight: 500;
+  font-size: 13px;
+}
+.field input[type=number],
+.field select,
+.field input[type=text] {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+}
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--input-focus);
+}
+.field .hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+}
+.field-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.field-check label { margin: 0; }
+
+.qs-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.3fr 30px;
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+}
+.qs-grid > .qs-label {
+  font-weight: 500;
+  color: var(--label);
+  font-size: 13px;
+  padding-bottom: 7px;
+}
+.qs-grid input, .qs-grid select {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+}
+.qs-grid-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.3fr 30px;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  padding: 0 2px;
+}
+.qs-grid-header > *:first-child { text-align: left; }
+
+/* ============================================================
+   ERGEBNISSE
+   ============================================================ */
+.result-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.result-card h2 {
+  margin: 0 0 12px 0;
+  color: var(--heading);
+  font-size: 16px;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 8px;
+}
+.result-card h3 {
+  margin: 16px 0 8px 0;
+  color: var(--heading);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary {
+  background: var(--sum-bg);
+  border: 2px solid var(--sum-border);
+  border-radius: 6px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.summary-item {
+  display: flex;
+  flex-direction: column;
+}
+.summary-item .label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.summary-item .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--heading);
+  font-variant-numeric: tabular-nums;
+}
+.summary-item .unit {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.result-table th,
+.result-table td {
+  padding: 6px 8px;
+  text-align: right;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+.result-table th {
+  background: var(--bg-sub);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.result-table th:first-child,
+.result-table td:first-child {
+  text-align: left;
+}
+.result-table tr.sum-row td {
+  font-weight: 700;
+  background: var(--bg-sub);
+  border-top: 2px solid var(--accent);
+}
+
+/* ============================================================
+   SVG-VIZ
+   ============================================================ */
+.viz-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+.viz-card h2 {
+  margin: 0 0 12px 0;
+  color: var(--heading);
+  font-size: 16px;
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 8px;
+}
+.viz-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.viz-tabs button {
+  background: transparent;
+  border: none;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.viz-tabs button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.viz-panel { display: none; }
+.viz-panel.active { display: block; }
+.viz-svg-wrap {
+  background: var(--viz-fill);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+  overflow: auto;
+}
+.viz-svg-wrap svg {
+  width: 100%;
+  height: auto;
+  max-height: 480px;
+  display: block;
+}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+.toolbar button {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.toolbar button:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.toolbar button.primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.toolbar button.primary:hover { background: var(--accent-hov); border-color: var(--accent-hov); }
+
+/* ============================================================
+   CUSTOM PARTS
+   ============================================================ */
+.custom-part {
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.custom-part-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.custom-part-head strong { color: var(--heading); font-size: 13px; }
+.btn-icon {
+  background: transparent;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 6px;
+}
+.btn-add {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--accent);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  width: 100%;
+  margin-top: 4px;
+}
+.btn-add:hover { border-color: var(--accent); background: var(--sum-bg); }
+
+/* ============================================================
+   HINWEISE / WARN
+   ============================================================ */
+.warn-box {
+  background: rgba(220,38,38,0.08);
+  border-left: 3px solid var(--danger);
+  color: var(--danger);
+  padding: 10px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* Warn-Dreieck mit Tooltip (für Querschnitte) */
+.qs-warn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  margin-left: 4px;
+  cursor: help;
+  position: relative;
+  color: #f59e0b;
+  font-size: 14px;
+  vertical-align: middle;
+}
+.qs-warn::before { content: "⚠"; }
+.qs-warn[data-severity="error"] { color: var(--danger); }
+.qs-warn .tip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 125%;
+  right: 0;
+  background: var(--text);
+  color: var(--bg-elev);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  width: max-content;
+  max-width: 240px;
+  white-space: normal;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  transition: opacity 0.15s;
+  font-weight: normal;
+  text-align: left;
+  line-height: 1.4;
+}
+.qs-warn:hover .tip, .qs-warn:focus .tip {
+  visibility: visible;
+  opacity: 1;
+}
+.qs-grid-warn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+  min-height: 20px;
+}
+
+/* Disabled/gesperrte Felder (z.B. Neigung bei Flach) */
+input:disabled, select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-sub) !important;
+}
+
+/* Fix-Section (nicht aufklappbar) */
+.acc-section.fixed {
+  border-left: 3px solid var(--accent);
+}
+.acc-section.fixed .acc-header {
+  cursor: default;
+  background: var(--bg-elev);
+}
+.acc-section.fixed .acc-header:hover {
+  background: var(--bg-elev);
+}
+.acc-section.fixed .acc-header .arrow { display: none; }
+.acc-section.fixed .acc-body {
+  max-height: none !important;
+}
+
+/* Reine Info-Anzeige (berechnete Werte) */
+.calc-display {
+  padding: 6px 10px;
+  background: var(--bg-sub);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  color: var(--heading);
+  font-weight: 600;
+}
+
+/* ============================================================
+   PRINT
+   ============================================================ */
+@media print {
+  header.app-header, .toolbar, .viz-tabs, .theme-switcher { display: none !important; }
+  .acc-section .acc-body { max-height: none !important; }
+  .acc-header .arrow { display: none; }
+  body { background: #fff; color: #000; }
+  main { grid-template-columns: 1fr; padding: 0; }
+  .viz-panel { display: block !important; page-break-inside: avoid; }
+}
+
+.footer-info {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 16px;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-logo">CP</div>
+    <div class="brand-text">
+      <div class="title">Carport-Kalkulator</div>
+      <div class="subtitle">Holzbau · KVH / BSH / C24 · EPDM · v1.0</div>
+    </div>
+  </div>
+  <div class="theme-switcher" role="tablist" aria-label="Theme">
+    <button data-theme-btn="auto" class="active">Auto</button>
+    <button data-theme-btn="light">Hell</button>
+    <button data-theme-btn="dark">Dunkel</button>
+  </div>
+</header>
+
+<main>
+  <!-- ================ EINGABE-SPALTE ================ -->
+  <div class="column">
+    <div class="accordion" id="accordion">
+
+      <!-- GRUNDMASSE -->
+      <section class="acc-section open" data-section="grund">
+        <div class="acc-header">
+          <span>Grundmaße &amp; Dachform</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="form-grid">
+            <div class="field">
+              <label for="laenge">Länge (Pfetten-Richtung)</label>
+              <input type="number" id="laenge" value="500" min="50" step="1">
+              <div class="hint">cm</div>
+            </div>
+            <div class="field">
+              <label for="breite">Breite (Sparren-Richtung)</label>
+              <input type="number" id="breite" value="300" min="50" step="1">
+              <div class="hint">cm</div>
+            </div>
+            <div class="field">
+              <label for="dachform">Dachform</label>
+              <select id="dachform">
+                <option value="flach">Flachdach</option>
+                <option value="pult">Pultdach</option>
+                <option value="sattel">Satteldach</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="neigung">Dachneigung</label>
+              <input type="number" id="neigung" value="5" min="0" max="60" step="0.5">
+              <div class="hint">Grad (bei Flachdach gesperrt)</div>
+            </div>
+            <div class="field">
+              <label for="ue_pfetten">Überstand Pfetten-Richtung</label>
+              <input type="number" id="ue_pfetten" value="30" min="0" step="1">
+              <div class="hint">cm — Giebelseite (je Seite)</div>
+            </div>
+            <div class="field">
+              <label for="ue_sparren">Überstand Sparren-Richtung</label>
+              <input type="number" id="ue_sparren" value="30" min="0" step="1">
+              <div class="hint">cm — Traufseite (je Seite)</div>
+            </div>
+            <div class="field full">
+              <label for="hoehen_bezug">Höhen-Bezug</label>
+              <select id="hoehen_bezug">
+                <option value="uk_pfette"         data-dachform="flach">UK Pfette</option>
+                <option value="uk_pfette_niedrig" data-dachform="pult">UK Pfette niedrig</option>
+                <option value="uk_pfette_hoch"    data-dachform="pult">UK Pfette hoch</option>
+                <option value="uk_pfette_fuss"    data-dachform="sattel">UK Fußpfette</option>
+                <option value="uk_firstpfette"    data-dachform="sattel">UK Firstpfette</option>
+                <option value="ok_dach_trauf"     data-dachform="flach,pult,sattel">OK Dachhaut — Traufe</option>
+                <option value="ok_dach_first"     data-dachform="pult,sattel">OK Dachhaut — First</option>
+              </select>
+              <div class="hint">Worauf bezieht sich die Zielhöhe?</div>
+            </div>
+            <div class="field">
+              <label for="ziel_hoehe">Zielhöhe</label>
+              <input type="number" id="ziel_hoehe" value="250" min="100" step="1">
+              <div class="hint">cm über OK Boden</div>
+            </div>
+            <div class="field">
+              <label>Errechnete Pfostenlänge</label>
+              <div class="calc-display" id="r_pfostenlaenge">–</div>
+              <div class="hint">inkl. 5 cm Zapfen · UK Sparren auf OK Pfette (Kerve innenliegend)</div>
+            </div>
+            <div class="field">
+              <label for="sparrenabstand">Sparrenabstand</label>
+              <input type="number" id="sparrenabstand" value="70" min="30" step="1">
+              <div class="hint">cm (Achsmaß)</div>
+            </div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- PFOSTEN (fix, nicht aufklappbar) -->
+      <section class="acc-section fixed open" data-section="pfosten">
+        <div class="acc-header">
+          <span>Pfosten</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="form-grid">
+            <div class="field">
+              <label for="pfosten_anzahl">Anzahl Pfosten</label>
+              <input type="number" id="pfosten_anzahl" value="6" min="4" step="1">
+              <div class="hint">typisch 4 (Rechteck) oder 6 (mit Mittelstütze)</div>
+            </div>
+            <div class="field">
+              <label for="verankerung">Verankerung</label>
+              <select id="verankerung">
+                <option value="h_anker">H-Anker</option>
+                <option value="einbetoniert">Einbetoniert</option>
+                <option value="aufgeschraubt">Aufgeschraubt</option>
+              </select>
+            </div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- KOPFBÄNDER (fix, nicht aufklappbar) -->
+      <section class="acc-section fixed open" data-section="kopfband">
+        <div class="acc-header">
+          <span>Kopfbänder</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="form-grid">
+            <div class="field full field-check">
+              <input type="checkbox" id="kopfband_aktiv" checked>
+              <label for="kopfband_aktiv">Kopfbänder verwenden (Aussteifung)</label>
+            </div>
+            <div class="field">
+              <label for="kopfband_ausstell">Ausstellmaß</label>
+              <input type="number" id="kopfband_ausstell" value="60" min="20" step="1">
+              <div class="hint">cm (Schenkel-Länge)</div>
+            </div>
+            <div class="field">
+              <label for="kopfband_anzahl">Anzahl Kopfbänder</label>
+              <input type="number" id="kopfband_anzahl" value="6" min="0" step="1">
+            </div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- SATTELDACH-ZUSATZ (nur bei Sattel sichtbar) -->
+      <section class="acc-section" data-section="sattel_zusatz" id="sattel_zusatz_section" style="display:none;">
+        <div class="acc-header">
+          <span>Satteldach — Querbalken &amp; First-Stützen</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="form-grid">
+            <div class="field">
+              <label for="querbalken_anzahl">Anzahl Querbalken</label>
+              <input type="number" id="querbalken_anzahl" value="2" min="0" step="1">
+              <div class="hint">Vorschlag: <span id="querbalken_vorschlag">2</span> (L&lt;5m=2, L≥5m=3, +1 je 5m)</div>
+            </div>
+            <div class="field">
+              <label>Querbalken-Länge</label>
+              <div class="calc-display" id="r_querbalken_laenge">–</div>
+              <div class="hint">cm — aus Breite berechnet</div>
+            </div>
+            <div class="field">
+              <label>First-Stützen</label>
+              <div class="calc-display" id="r_firststuetzen_anzahl">–</div>
+              <div class="hint">eine pro Querbalken</div>
+            </div>
+            <div class="field">
+              <label>First-Stützen Länge</label>
+              <div class="calc-display" id="r_firststuetzen_laenge">–</div>
+              <div class="hint">cm — OK Querbalken bis UK Firstpfette</div>
+            </div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- QUERSCHNITTE -->
+      <section class="acc-section" data-section="querschnitte">
+        <div class="acc-header">
+          <span>Querschnitte</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="qs-grid-header">
+            <span>Bauteil</span><span>B [cm]</span><span>H [cm]</span><span>Material</span><span></span>
+          </div>
+          <div class="qs-grid">
+            <div class="qs-label">Pfosten</div>
+            <input type="number" id="qs_pfosten_b" value="12" min="8" step="2">
+            <input type="number" id="qs_pfosten_h" value="12" min="8" step="2">
+            <select id="qs_pfosten_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_pfosten"></div>
+          </div>
+          <div class="qs-grid">
+            <div class="qs-label">Kopfband</div>
+            <input type="number" id="qs_kopfband_b" value="10" min="8" step="2">
+            <input type="number" id="qs_kopfband_h" value="10" min="8" step="2">
+            <select id="qs_kopfband_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_kopfband"></div>
+          </div>
+          <div class="qs-grid">
+            <div class="qs-label">Sparren</div>
+            <input type="number" id="qs_sparren_b" value="8" min="8" step="2">
+            <input type="number" id="qs_sparren_h" value="20" min="10" step="2">
+            <select id="qs_sparren_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_sparren"></div>
+          </div>
+          <div class="qs-grid">
+            <div class="qs-label">Pfette 1 (Traufe/First)</div>
+            <input type="number" id="qs_pfette1_b" value="12" min="8" step="2">
+            <input type="number" id="qs_pfette1_h" value="20" min="10" step="2">
+            <select id="qs_pfette1_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_pfette1"></div>
+          </div>
+          <div class="qs-grid">
+            <div class="qs-label">Pfette 2 (Traufe)</div>
+            <input type="number" id="qs_pfette2_b" value="12" min="8" step="2">
+            <input type="number" id="qs_pfette2_h" value="20" min="10" step="2">
+            <select id="qs_pfette2_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_pfette2"></div>
+          </div>
+          <div class="qs-grid" id="qs_firstpfette_row" style="display:none;">
+            <div class="qs-label">Firstpfette</div>
+            <input type="number" id="qs_firstpfette_b" value="12" min="8" step="2">
+            <input type="number" id="qs_firstpfette_h" value="20" min="10" step="2">
+            <select id="qs_firstpfette_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_firstpfette"></div>
+          </div>
+          <div class="qs-grid" id="qs_querbalken_row" style="display:none;">
+            <div class="qs-label">Querbalken</div>
+            <input type="number" id="qs_querbalken_b" value="8" min="8" step="2">
+            <input type="number" id="qs_querbalken_h" value="16" min="10" step="2">
+            <select id="qs_querbalken_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_querbalken"></div>
+          </div>
+          <div class="qs-grid" id="qs_firststuetze_row" style="display:none;">
+            <div class="qs-label">First-Stütze <span style="color:var(--text-muted);font-weight:normal;font-size:11px;">(b = Firstpfetten-Breite)</span></div>
+            <input type="number" id="qs_firststuetze_b" value="12" min="8" step="2" disabled>
+            <input type="number" id="qs_firststuetze_h" value="12" min="8" step="2">
+            <select id="qs_firststuetze_sk"><option>KVH</option><option>BSH</option><option>KVH-Douglasie</option></select>
+            <div class="qs-grid-warn" id="warn_firststuetze"></div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- EIGENE BAUTEILE -->
+      <section class="acc-section" data-section="custom">
+        <div class="acc-header">
+          <span>Eigene Bauteile <span class="badge" id="custom_badge" style="display:none;">0</span></span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div id="custom_list"></div>
+          <button type="button" class="btn-add" id="add_custom">+ Bauteil hinzufügen</button>
+        </div></div>
+      </section>
+
+      <!-- EPDM (Werte fix, immer aktiv — keine Eingaben mehr) -->
+      <!-- EPDM wird direkt in der Ergebnis-Spalte angezeigt -->
+
+      <!-- WANDVERKLEIDUNG (ausgeblendet - kommt später) -->
+      <section class="acc-section" data-section="wand" style="display:none;">
+        <div class="acc-header">
+          <span>Wandverkleidung</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="form-grid">
+            <div class="field full field-check">
+              <input type="checkbox" id="wand_aktiv">
+              <label for="wand_aktiv">Wandverkleidung aktivieren</label>
+            </div>
+            <div class="field">
+              <label for="wand_material">Material</label>
+              <select id="wand_material">
+                <option value="rhombus">Rhombusleisten</option>
+                <option value="nut_feder">Nut+Feder</option>
+                <option value="osb">OSB</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="wand_deckbreite">Deckbreite pro Leiste</label>
+              <input type="number" id="wand_deckbreite" value="6.5" min="1" step="0.1">
+              <div class="hint">cm — nur bei Leisten</div>
+            </div>
+            <div class="field-check full"><input type="checkbox" id="wand_s_links"><label for="wand_s_links">Seite links (Längsseite)</label></div>
+            <div class="field-check full"><input type="checkbox" id="wand_s_rechts"><label for="wand_s_rechts">Seite rechts (Längsseite)</label></div>
+            <div class="field-check full"><input type="checkbox" id="wand_s_vorne"><label for="wand_s_vorne">Vorne (Querseite)</label></div>
+            <div class="field-check full"><input type="checkbox" id="wand_s_hinten"><label for="wand_s_hinten">Hinten (Querseite)</label></div>
+            <div class="field">
+              <label for="wand_zuschlag">Verschnitt-Zuschlag</label>
+              <input type="number" id="wand_zuschlag" value="10" min="0" step="1">
+              <div class="hint">% auf Fläche</div>
+            </div>
+            <div class="field">
+              <label for="wand_hoehe">Höhe Verkleidung</label>
+              <input type="number" id="wand_hoehe" value="0" min="0" step="1">
+              <div class="hint">cm — 0 = volle Pfostenhöhe</div>
+            </div>
+          </div>
+        </div></div>
+      </section>
+
+      <!-- ZUSCHLAG -->
+      <section class="acc-section" data-section="zuschlag">
+        <div class="acc-header">
+          <span>Zuschläge &amp; Optionen</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="acc-body"><div class="acc-body-inner">
+          <div class="form-grid">
+            <div class="field">
+              <label for="zuschlag_holz">Holz-Zuschlag</label>
+              <input type="number" id="zuschlag_holz" value="10" min="0" step="1">
+              <div class="hint">% auf LFM &amp; Volumen</div>
+            </div>
+            <div class="field">
+              <label for="sicherheit_sparren">Sicherheitszuschlag Sparren</label>
+              <select id="sicherheit_sparren">
+                <option value="auto">Automatisch (Flach +1, Pult/Sattel +2)</option>
+                <option value="0">+0</option>
+                <option value="1">+1</option>
+                <option value="2">+2</option>
+              </select>
+            </div>
+          </div>
+        </div></div>
+      </section>
+
+    </div>
+
+    <div class="toolbar">
+      <button type="button" id="btn_export">💾 JSON exportieren</button>
+      <button type="button" id="btn_import">📂 JSON importieren</button>
+      <input type="file" id="file_import" accept="application/json,.json" style="display:none;">
+      <button type="button" id="btn_print">🖨 Drucken</button>
+    </div>
+  </div>
+
+  <!-- ================ ERGEBNIS-SPALTE ================ -->
+  <div class="column">
+
+    <div class="result-card">
+      <h2>Zusammenfassung</h2>
+      <div class="summary">
+        <div class="summary-grid">
+          <div class="summary-item">
+            <span class="label">Laufende Meter gesamt</span>
+            <span class="value"><span id="r_lfm">–</span><span class="unit">m</span></span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Holz gesamt</span>
+            <span class="value"><span id="r_m3">–</span><span class="unit">m³</span></span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Dachfläche</span>
+            <span class="value"><span id="r_dachflaeche">–</span><span class="unit">m²</span></span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Grundfläche</span>
+            <span class="value"><span id="r_grundflaeche">–</span><span class="unit">m²</span></span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Zapfen (Verbindungen)</span>
+            <span class="value"><span id="r_zapfen">–</span><span class="unit">stk</span></span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Voraussichtliche Zeit</span>
+            <span class="value"><span id="r_zeit">–</span><span class="unit">h</span></span>
+          </div>
+        </div>
+      </div>
+
+      <h3>Holz nach Sortierung</h3>
+      <table class="result-table">
+        <thead><tr><th>Sortierung</th><th>Volumen [m³]</th></tr></thead>
+        <tbody>
+          <tr><td>KVH</td><td id="r_kvh">–</td></tr>
+          <tr><td>BSH</td><td id="r_bsh">–</td></tr>
+          <tr><td>KVH-Douglasie</td><td id="r_douglasie">–</td></tr>
+          <tr class="sum-row"><td>Gesamt</td><td id="r_gesamt">–</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Bauteilliste</h3>
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Bauteil</th>
+            <th>Anz.</th>
+            <th>Einzel [m]</th>
+            <th>LFM [m]</th>
+            <th>Ø [m²]</th>
+            <th>Vol [m³]</th>
+            <th>Mat.</th>
+          </tr>
+        </thead>
+        <tbody id="r_teile"></tbody>
+      </table>
+
+      <div id="r_epdm_block">
+        <h3>EPDM / Dachabdichtung</h3>
+        <table class="result-table">
+          <tbody>
+            <tr><td>EPDM Breite (m)</td><td id="r_epdm_b">–</td></tr>
+            <tr><td>EPDM Länge (m)</td><td id="r_epdm_l">–</td></tr>
+            <tr><td>EPDM Fläche (m²)</td><td id="r_epdm_flaeche">–</td></tr>
+            <tr><td>Flächenkleber (Liter)</td><td id="r_epdm_kleber">–</td></tr>
+            <tr><td>Traufe Nahtband (m)</td><td id="r_epdm_nahtband">–</td></tr>
+            <tr><td>Aktivierung (ml)</td><td id="r_epdm_aktivierung">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="r_wand_block" style="display:none;">
+        <h3>Wandverkleidung</h3>
+        <table class="result-table">
+          <tbody>
+            <tr><td>Gesamtfläche (m²)</td><td id="r_wand_flaeche">–</td></tr>
+            <tr><td>Fläche + Zuschlag (m²)</td><td id="r_wand_flaeche_z">–</td></tr>
+            <tr><td>Laufmeter / Leisten (m)</td><td id="r_wand_lfm">–</td></tr>
+            <tr><td>Stückzahl Leisten</td><td id="r_wand_stk">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="warn_box" class="warn-box" style="display:none;"></div>
+    </div>
+
+    <div class="viz-card">
+      <h2>Visualisierung</h2>
+      <div class="viz-tabs">
+        <button data-viz="grundriss" class="active">Grundriss</button>
+        <button data-viz="schnitt">Schnitt</button>
+        <button data-viz="seite">Seitenansicht</button>
+      </div>
+      <div class="viz-panel active" id="viz_grundriss">
+        <div class="viz-svg-wrap"><svg id="svg_grundriss" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+      <div class="viz-panel" id="viz_schnitt">
+        <div class="viz-svg-wrap"><svg id="svg_schnitt" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+      <div class="viz-panel" id="viz_seite">
+        <div class="viz-svg-wrap"><svg id="svg_seite" viewBox="0 0 800 500" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div class="footer-info">
+  Carport-Kalkulator v1.0 · lokal lauffähig · keine externen Ressourcen · JSON-kompatibel mit Dach-Kalkulator (tool-Diskriminator)
+</div>
+
+<script>
+/* ============================================================
+   CARPORT-KALKULATOR — Logik
+   ============================================================ */
+(function() {
+'use strict';
+
+// ============================================================
+// KONSTANTEN (zentral)
+// ============================================================
+const VERSION = '1.0';
+const TOOL = 'carport';
+
+// Holzbau-Konstanten
+const ZAPFEN_ZUSCHLAG_CM = 5;      // Zapfen-Aufschlag auf Pfostenlänge
+const SPARREN_KERVE_CM = 3;        // Sparren-Einkerbung (rechtwinklig zur Dachfläche)
+
+// EPDM-Werte (aus Excel v3.0, fix)
+const EPDM_RAND_CM = 15;
+const EPDM_KLEBER_L_PRO_M2 = 0.2;
+const EPDM_AKTIVIERUNG_ML_PRO_M = 13.8;
+
+// SVG-Canvas-Dimensionen
+const SVG_W = 800;
+const SVG_H = 500;
+const SVG_PADDING = 70;
+
+// Douglasie-Lieferbarkeits-Grenze
+const DOUGLASIE_MAX_B = 14;
+const DOUGLASIE_MAX_H = 22;
+
+// ============================================================
+// HILFSFUNKTIONEN
+// ============================================================
+const $ = id => document.getElementById(id);
+const qsa = s => document.querySelectorAll(s);
+
+const num = id => {
+  const el = $(id);
+  if (!el) return 0;
+  const v = parseFloat(el.value);
+  return isNaN(v) ? 0 : v;
+};
+const str = id => {
+  const el = $(id);
+  return el ? el.value : '';
+};
+const bool = id => {
+  const el = $(id);
+  return el ? !!el.checked : false;
+};
+const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+
+const fmt = (v, dec) => {
+  if (dec === undefined) dec = 3;
+  if (!isFinite(v)) return '–';
+  return v.toLocaleString('de-DE', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+};
+const fmtInt = v => isFinite(v) ? Math.round(v).toLocaleString('de-DE') : '–';
+
+const toRad = g => g * Math.PI / 180;
+const roundUp = n => isFinite(n) ? Math.ceil(n - 1e-12) : 0;
+
+// ============================================================
+// THEME
+// ============================================================
+function applyTheme(theme, doCalc) {
+  const html = document.documentElement;
+  if (theme === 'auto') {
+    html.removeAttribute('data-theme');
+  } else {
+    html.setAttribute('data-theme', theme);
+  }
+  qsa('.theme-switcher button').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-theme-btn') === theme);
+  });
+  if (doCalc) {
+    try { calculate(); } catch (e) { /* SVG braucht aktuelle Werte, harmless */ }
+  }
+}
+qsa('.theme-switcher button').forEach(b => {
+  b.addEventListener('click', () => applyTheme(b.getAttribute('data-theme-btn'), true));
+});
+
+// ============================================================
+// AKKORDEON
+// ============================================================
+qsa('#accordion .acc-header').forEach(h => {
+  h.addEventListener('click', () => {
+    const sec = h.closest('.acc-section');
+    if (sec.classList.contains('fixed')) return; // fixed = nicht togglen
+    sec.classList.toggle('open');
+  });
+});
+
+// ============================================================
+// VIZ-TABS
+// ============================================================
+qsa('.viz-tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    const target = b.getAttribute('data-viz');
+    qsa('.viz-tabs button').forEach(x => x.classList.toggle('active', x === b));
+    qsa('.viz-panel').forEach(p => p.classList.toggle('active', p.id === 'viz_' + target));
+  });
+});
+
+// ============================================================
+// CUSTOM PARTS (eigene Bauteile)
+// ============================================================
+let customParts = [];
+let customIdCounter = 0;
+
+function renderCustomParts() {
+  const list = $('custom_list');
+  list.innerHTML = '';
+  customParts.forEach(cp => {
+    const div = document.createElement('div');
+    div.className = 'custom-part';
+    div.innerHTML =
+      '<div class="custom-part-head">' +
+        '<strong>Bauteil ' + cp.id + '</strong>' +
+        '<button type="button" class="btn-icon" data-del="' + cp.id + '" title="Entfernen">✕</button>' +
+      '</div>' +
+      '<div class="form-grid">' +
+        '<div class="field full"><label>Bezeichnung</label>' +
+          '<input type="text" data-cp="name" data-id="' + cp.id + '" value="' + escapeHtml(cp.name) + '"></div>' +
+        '<div class="field"><label>Anzahl</label>' +
+          '<input type="number" data-cp="anzahl" data-id="' + cp.id + '" value="' + (cp.anzahl || 0) + '" min="0" step="1"></div>' +
+        '<div class="field"><label>Einzellänge [m]</label>' +
+          '<input type="number" data-cp="einzel" data-id="' + cp.id + '" value="' + (cp.einzel || 0) + '" min="0" step="0.01"></div>' +
+        '<div class="field"><label>LFM gesamt [m]</label>' +
+          '<input type="number" data-cp="lfm" data-id="' + cp.id + '" value="' + cp.lfm + '" min="0" step="0.1"></div>' +
+        '<div class="field"><label>Ø [m²]</label>' +
+          '<input type="number" data-cp="flaeche" data-id="' + cp.id + '" value="' + cp.flaeche + '" min="0" step="0.0001"></div>' +
+        '<div class="field"><label>Breite [cm]</label>' +
+          '<input type="number" data-cp="b" data-id="' + cp.id + '" value="' + cp.b + '" min="0" step="0.5"></div>' +
+        '<div class="field"><label>Höhe [cm]</label>' +
+          '<input type="number" data-cp="h" data-id="' + cp.id + '" value="' + cp.h + '" min="0" step="0.5"></div>' +
+        '<div class="field full"><label>Material</label>' +
+          '<select data-cp="sk" data-id="' + cp.id + '">' +
+            '<option value="KVH"' + (cp.sk==='KVH'?' selected':'') + '>KVH</option>' +
+            '<option value="BSH"' + (cp.sk==='BSH'?' selected':'') + '>BSH</option>' +
+            '<option value="KVH-Douglasie"' + (cp.sk==='KVH-Douglasie'?' selected':'') + '>KVH-Douglasie</option>' +
+          '</select></div>' +
+      '</div>' +
+      '<div class="hint" style="margin-top:6px;font-size:11px;color:var(--text-muted);">' +
+        'Anzahl × Einzellänge berechnet LFM automatisch. Ø [m²] = 0 → wird aus B×H berechnet.' +
+      '</div>';
+    list.appendChild(div);
+  });
+  const badge = $('custom_badge');
+  if (customParts.length > 0) {
+    badge.style.display = 'inline-block';
+    badge.textContent = customParts.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+$('add_custom').addEventListener('click', () => {
+  customIdCounter++;
+  customParts.push({
+    id: customIdCounter,
+    name: 'Eigenes Bauteil',
+    anzahl: 0, einzel: 0,
+    lfm: 0, flaeche: 0,
+    b: 10, h: 10, sk: 'KVH'
+  });
+  renderCustomParts();
+  calculate();
+});
+
+$('custom_list').addEventListener('click', e => {
+  if (e.target.dataset.del) {
+    const id = parseInt(e.target.dataset.del);
+    customParts = customParts.filter(x => x.id !== id);
+    renderCustomParts();
+    calculate();
+  }
+});
+$('custom_list').addEventListener('input', e => {
+  const field = e.target.dataset.cp;
+  const id = parseInt(e.target.dataset.id);
+  if (!field) return;
+  const cp = customParts.find(x => x.id === id);
+  if (!cp) return;
+  if (field === 'name' || field === 'sk') cp[field] = e.target.value;
+  else cp[field] = parseFloat(e.target.value) || 0;
+  // Auto-LFM aus anzahl × einzel (nur wenn beide > 0 gesetzt und User nicht gerade am LFM-Feld ist)
+  if (field === 'anzahl' || field === 'einzel') {
+    if (cp.anzahl > 0 && cp.einzel > 0) {
+      cp.lfm = cp.anzahl * cp.einzel;
+      const lfmInput = document.querySelector('input[data-cp="lfm"][data-id="' + id + '"]');
+      if (lfmInput) lfmInput.value = cp.lfm.toFixed(2);
+    }
+  }
+  calculate();
+});
+
+// ============================================================
+// HAUPT-BERECHNUNG
+// ============================================================
+
+// Hilfsfunktion: Querbalken-Vorschlag aus Länge
+function querbalkenVorschlag(laenge_cm) {
+  if (laenge_cm < 500) return 2;
+  // ab 500cm = 3, dann +1 je weitere 500cm
+  return 3 + Math.floor((laenge_cm - 500) / 500);
+}
+
+// Hilfsfunktion: Warn-Icon rendern
+function setWarn(id, severity, msg) {
+  const el = $(id);
+  if (!el) return;
+  if (!msg) {
+    el.innerHTML = '';
+    return;
+  }
+  el.setAttribute('data-severity', severity || 'warn');
+  el.innerHTML = '<span class="qs-warn" tabindex="0" data-severity="' + (severity||'warn') + '"><span class="tip">' + escapeHtml(msg) + '</span></span>';
+}
+
+// Hilfsfunktion: Querschnitt prüfen → Warnung-Text (oder null)
+function pruefeQS(b, h, sk, bauteilName) {
+  const hints = [];
+  // 2er-Schritt-Check
+  if (b > 0 && (b * 10) % 20 !== 0) hints.push('B=' + b + ' cm ist kein 2er-Schritt');
+  if (h > 0 && (h * 10) % 20 !== 0) hints.push('H=' + h + ' cm ist kein 2er-Schritt');
+  // Mindest 8/10
+  if (b > 0 && h > 0 && (b < 8 || h < 10) && !(b >= 10 && h >= 8)) {
+    // Sondererlaubnis: 10/8 ist = 8/10 gedreht -> ok
+    hints.push('Querschnitt unter 8/10 — Mindestquerschnitt prüfen');
+  }
+  // ab Breite ≥ 16 cm nur BSH
+  if (b >= 16 && sk === 'KVH') {
+    hints.push('Ab Breite 16 cm üblicherweise BSH erforderlich — KVH in dieser Dimension kaum lieferbar');
+  }
+  // Douglasie: typisch begrenzt
+  if (sk === 'KVH-Douglasie') {
+    if (b > DOUGLASIE_MAX_B || h > DOUGLASIE_MAX_H) {
+      hints.push('KVH-Douglasie in b/h > ' + DOUGLASIE_MAX_B + '/' + DOUGLASIE_MAX_H + ' cm nur eingeschränkt lieferbar — ggf. auf BSH wechseln');
+    }
+  }
+  return hints.length > 0 ? hints.join('; ') : null;
+}
+
+function calculate() {
+  // --- Grundeingaben ---
+  const L        = num('laenge');          // cm
+  const B        = num('breite');          // cm
+  const dachform = str('dachform');        // flach | pult | sattel
+  let   neigung  = num('neigung');         // Grad
+  const uePfetten= num('ue_pfetten');      // cm (Giebel)
+  const ueSparren= num('ue_sparren');      // cm (Traufe)
+  const hoehenBezug = str('hoehen_bezug'); // uk_pfette | ok_dach_trauf | ok_dach_first
+  const zielHoehe = num('ziel_hoehe');     // cm
+  const spAbst   = num('sparrenabstand');
+  const pfAnz    = num('pfosten_anzahl');
+
+  const kbAktiv  = bool('kopfband_aktiv');
+  const kbAusst  = num('kopfband_ausstell');
+  const kbAnz    = num('kopfband_anzahl');
+
+  // Dachform-abhängige UI-Steuerung
+  // Neigung bei Flachdach sperren
+  const neigungEl = $('neigung');
+  if (dachform === 'flach') {
+    neigungEl.disabled = true;
+    neigung = 0;
+  } else {
+    neigungEl.disabled = false;
+  }
+  const n = (dachform === 'flach') ? 0 : neigung;
+  const cosN = Math.cos(toRad(n));
+  const tanN = Math.tan(toRad(n));
+
+  // Höhen-Bezug: nur Optionen anzeigen, die zur aktuellen Dachform passen
+  // (per data-dachform-Attribut gesteuert)
+  const hbEl = $('hoehen_bezug');
+  let erstePassendeOption = null;
+  let aktuelleNochValide = false;
+  Array.from(hbEl.options).forEach(opt => {
+    const allowed = (opt.getAttribute('data-dachform') || '').split(',').map(s => s.trim());
+    const passt = allowed.includes(dachform);
+    opt.hidden = !passt;
+    opt.disabled = !passt;
+    if (passt) {
+      if (!erstePassendeOption) erstePassendeOption = opt.value;
+      if (opt.value === hoehenBezug) aktuelleNochValide = true;
+    }
+  });
+  // Fallback: aktuelle Auswahl passt nicht zur Dachform → auf erste passende setzen
+  let effektiverHB = hoehenBezug;
+  if (!aktuelleNochValide && erstePassendeOption) {
+    effektiverHB = erstePassendeOption;
+    hbEl.value = erstePassendeOption;
+  }
+
+  // --- Querschnitte ---
+  const qs = {
+    pfosten:      { b: num('qs_pfosten_b'),      h: num('qs_pfosten_h'),      sk: str('qs_pfosten_sk') },
+    kopfband:     { b: num('qs_kopfband_b'),     h: num('qs_kopfband_h'),     sk: str('qs_kopfband_sk') },
+    sparren:      { b: num('qs_sparren_b'),      h: num('qs_sparren_h'),      sk: str('qs_sparren_sk') },
+    pfette1:      { b: num('qs_pfette1_b'),      h: num('qs_pfette1_h'),      sk: str('qs_pfette1_sk') },
+    pfette2:      { b: num('qs_pfette2_b'),      h: num('qs_pfette2_h'),      sk: str('qs_pfette2_sk') },
+    firstpfette:  { b: num('qs_firstpfette_b'),  h: num('qs_firstpfette_h'),  sk: str('qs_firstpfette_sk') },
+    querbalken:   { b: num('qs_querbalken_b'),   h: num('qs_querbalken_h'),   sk: str('qs_querbalken_sk') },
+    firststuetze: { b: num('qs_firststuetze_b'), h: num('qs_firststuetze_h'), sk: str('qs_firststuetze_sk') }
+  };
+  // First-Stütze b = Firstpfetten-Breite (erzwungen)
+  if (dachform === 'sattel') {
+    const fsB = qs.firstpfette.b;
+    const inp = $('qs_firststuetze_b');
+    if (inp && parseFloat(inp.value) !== fsB) {
+      inp.value = fsB;
+    }
+    qs.firststuetze.b = fsB;
+  }
+
+  const zuschlagProz = num('zuschlag_holz');
+  const zuschlag = 1 + zuschlagProz / 100;
+
+  // Sicherheitszuschlag Sparren
+  const sicherAuswahl = str('sicherheit_sparren');
+  let sicherSparren;
+  if (sicherAuswahl === 'auto') {
+    sicherSparren = (dachform === 'flach') ? 1 : 2;
+  } else {
+    sicherSparren = parseInt(sicherAuswahl) || 0;
+  }
+
+  // --- Sektionen zeigen/verstecken nach Dachform ---
+  $('qs_firstpfette_row').style.display = (dachform === 'sattel') ? 'grid' : 'none';
+  $('qs_querbalken_row').style.display  = (dachform === 'sattel') ? 'grid' : 'none';
+  $('qs_firststuetze_row').style.display= (dachform === 'sattel') ? 'grid' : 'none';
+  $('sattel_zusatz_section').style.display = (dachform === 'sattel') ? 'block' : 'none';
+
+  // --- Querschnitts-Warnungen setzen ---
+  const qsChecks = [
+    ['warn_pfosten',     qs.pfosten,      'Pfosten'],
+    ['warn_kopfband',    qs.kopfband,     'Kopfband'],
+    ['warn_sparren',     qs.sparren,      'Sparren'],
+    ['warn_pfette1',     qs.pfette1,      'Pfette 1'],
+    ['warn_pfette2',     qs.pfette2,      'Pfette 2'],
+    ['warn_firstpfette', qs.firstpfette,  'Firstpfette'],
+    ['warn_querbalken',  qs.querbalken,   'Querbalken'],
+    ['warn_firststuetze',qs.firststuetze, 'First-Stütze']
+  ];
+  qsChecks.forEach(([id, q, name]) => {
+    const msg = pruefeQS(q.b, q.h, q.sk, name);
+    setWarn(id, 'warn', msg);
+  });
+
+  // --- Geometrie ---
+  // Sparrenlänge (Einzel) in m
+  let sparrenEinzel_m;
+  if (dachform === 'flach') {
+    sparrenEinzel_m = (B + 2 * ueSparren) / 100;
+  } else if (dachform === 'pult') {
+    sparrenEinzel_m = (B + 2 * ueSparren) / 100 / (cosN || 1);
+  } else { // sattel
+    sparrenEinzel_m = (B / 2 + ueSparren) / 100 / (cosN || 1);
+  }
+
+  // Sparren-Anzahl pro Dachseite
+  const sparrenProSeite = (spAbst > 0) ? roundUp((L + 2 * uePfetten) / spAbst) + 1 : 0;
+  let sparrenAnz;
+  if (dachform === 'sattel') sparrenAnz = sparrenProSeite * 2 + sicherSparren;
+  else sparrenAnz = sparrenProSeite + sicherSparren;
+
+  // Pfetten-Länge (m)
+  const pfetteLaenge_m = (L + 2 * uePfetten) / 100;
+
+  // === PFOSTENLÄNGE-BERECHNUNG ===
+  // Geometrisches Modell:
+  //   - Pfosten-Oberkante = UK Pfette
+  //   - UK Sparren liegt MIT UK auf OK Pfette auf (Sparren wird ausgeklinkt, sitzt plan auf)
+  //   - Kerve (KERVE rechtwinklig zur Dachfläche) ist ein INNERER Abzug im Auflagerbereich
+  //     → beeinflusst die OK-Dach-Höhe NICHT. Der Sparren-Unterboden ruht auf OK Pfette.
+  //   - OK Dach (an Pfetten-Achse) = OK Pfette + sparrenH / cos(α)
+  //   - An der Traufe (Außenkante Überstand) liegt OK Dach um ueSparren·tan(α) TIEFER
+  //   - Pult: Pfette hoch liegt B·tan(α) über Pfette niedrig
+  //   - Sattel: First liegt (B/2)·tan(α) über Fußpfette (getragen durch Querbalken+Stütze)
+  //   - ZAPFEN: Pfosten-Fertigungslänge = errechnete Länge + ZAPFEN_ZUSCHLAG_CM
+  // Hinweis: Formeln sind Näherungen; für Werkzeichnungen müssen Anschnitte und
+  // Überblattungen gesondert berücksichtigt werden.
+
+  const pfetteFussH = qs.pfette1.h;   // Fußpfette (Flach/Pult/Sattel niedrige Seite)
+  const sparrenH_cm = qs.sparren.h;
+
+  // KERVE: 3 cm rechtwinklig zur Dachfläche, aus UK Sparren ausgeklinkt.
+  // UK Sparren liegt MIT SEINER UK auf OK Pfette auf (keine Stufe, kein Abstand).
+  // Die Kerve ist ein INNERER Abzug im Auflagerbereich → beeinflusst NICHT die OK-Dach-Höhe.
+  // Dachpaket über Pfette (lotrecht): sparrenH / cos(α)
+  const dachAufbauUeberPfette_lot_cm = sparrenH_cm / (cosN || 1);
+
+  // --- Pfostenlänge(n) aus Höhen-Bezug ableiten ---
+  // Wir berechnen immer eine "Referenz-Pfostenlänge" = Pfosten an niedriger/Fußpfetten-Seite.
+  // Daraus ergeben sich die anderen Positionen per Geometrie.
+  let pfLen_niedrig_cm; // = Pfostenlänge an niedriger Seite (Flach: einheitlich)
+  const hb = effektiverHB;
+
+  if (dachform === 'flach') {
+    if (hb === 'ok_dach_trauf') {
+      // Flachdach: keine Kerve (α=0). OK Dach = OK Pfette + sparrenH
+      pfLen_niedrig_cm = zielHoehe - pfetteFussH - sparrenH_cm;
+    } else {
+      pfLen_niedrig_cm = zielHoehe;
+    }
+  } else if (dachform === 'pult') {
+    // Geometrie Pult: hohe Seite liegt B·tan(α) über niedriger
+    const diff = B * tanN;
+    if (hb === 'uk_pfette' || hb === 'uk_pfette_niedrig') {
+      pfLen_niedrig_cm = zielHoehe;
+    } else if (hb === 'uk_pfette_hoch') {
+      pfLen_niedrig_cm = zielHoehe - diff;
+    } else if (hb === 'ok_dach_trauf') {
+      // OK Dach Traufe = pfLen + pfetteH + dachAufbauÜberPfette_lot − ueSparren·tan(α)
+      pfLen_niedrig_cm = zielHoehe - pfetteFussH - dachAufbauUeberPfette_lot_cm + ueSparren * tanN;
+    } else if (hb === 'ok_dach_first') {
+      // OK Dach First = pfLen + diff + pfetteH + dachAufbauÜberPfette_lot + ueSparren·tan(α)
+      pfLen_niedrig_cm = zielHoehe - diff - pfetteFussH - dachAufbauUeberPfette_lot_cm - ueSparren * tanN;
+    } else {
+      pfLen_niedrig_cm = zielHoehe;
+    }
+  } else { // sattel
+    if (hb === 'uk_pfette' || hb === 'uk_pfette_fuss') {
+      pfLen_niedrig_cm = zielHoehe;
+    } else if (hb === 'uk_firstpfette') {
+      pfLen_niedrig_cm = zielHoehe - pfetteFussH - (B / 2) * tanN;
+    } else if (hb === 'ok_dach_trauf') {
+      pfLen_niedrig_cm = zielHoehe - pfetteFussH - dachAufbauUeberPfette_lot_cm + ueSparren * tanN;
+    } else if (hb === 'ok_dach_first') {
+      pfLen_niedrig_cm = zielHoehe - pfetteFussH - (B / 2) * tanN - dachAufbauUeberPfette_lot_cm;
+    } else {
+      pfLen_niedrig_cm = zielHoehe;
+    }
+  }
+
+  // Zapfen-Aufschlag für Fertigungslänge
+  const pfLen_niedrig_fertig_cm = pfLen_niedrig_cm + ZAPFEN_ZUSCHLAG_CM;
+  let pfLen_hoch_fertig_cm = null; // nur bei Pult
+  if (dachform === 'pult') {
+    pfLen_hoch_fertig_cm = pfLen_niedrig_cm + B * tanN + ZAPFEN_ZUSCHLAG_CM;
+  }
+
+  // Anzeige der errechneten Pfostenlänge
+  let pfostenAnzeige;
+  if (dachform === 'pult') {
+    pfostenAnzeige = Math.round(pfLen_niedrig_fertig_cm) + ' / ' + Math.round(pfLen_hoch_fertig_cm) + ' cm (niedrig / hoch, inkl. 5 cm Zapfen)';
+  } else {
+    pfostenAnzeige = Math.round(pfLen_niedrig_fertig_cm) + ' cm (inkl. 5 cm Zapfen)';
+  }
+  setText('r_pfostenlaenge', isFinite(pfLen_niedrig_cm) ? pfostenAnzeige : '–');
+
+  // --- Pfosten-Aufteilung ---
+  // Flach/Sattel: alle Pfosten gleich lang
+  // Pult: halb/halb zwischen niedrig und hoch (Standard-Rechteck-Pfostenbild)
+  let pfostenNiedrig_stk = pfAnz;
+  let pfostenHoch_stk = 0;
+  if (dachform === 'pult' && pfAnz >= 2) {
+    pfostenHoch_stk = Math.floor(pfAnz / 2);
+    pfostenNiedrig_stk = pfAnz - pfostenHoch_stk;
+  }
+
+  // Kopfband LFM
+  const kopfbandLFM_m = kbAktiv ? (kbAusst * Math.SQRT2 / 100 * kbAnz) : 0;
+
+  // === SATTELDACH-ZUSATZ ===
+  const qbVorschlag = querbalkenVorschlag(L);
+  setText('querbalken_vorschlag', qbVorschlag);
+  const qbAnzahl = (dachform === 'sattel') ? Math.max(0, num('querbalken_anzahl')) : 0;
+  const qbLaenge_cm = B; // vereinfacht: Carport-Innenbreite
+  setText('r_querbalken_laenge', (dachform === 'sattel') ? qbLaenge_cm + ' cm' : '–');
+
+  // First-Stütze: OK Querbalken → UK Firstpfette
+  //   OK Querbalken = UK Fußpfette + querbalkenH  (Querbalken liegt auf Fußpfette auf)
+  //   UK Firstpfette = UK Fußpfette + (B/2)·tan(α)  (lotrecht, vereinfacht)
+  //   firststuetze_länge = (B/2)·tan(α) − qs.querbalken.h
+  const firstStuetze_cm = Math.max(0, (B / 2) * tanN - qs.querbalken.h);
+  const firstStuetzenAnzahl = qbAnzahl;
+  setText('r_firststuetzen_anzahl', (dachform === 'sattel') ? firstStuetzenAnzahl + ' stk' : '–');
+  setText('r_firststuetzen_laenge', (dachform === 'sattel') ? Math.round(firstStuetze_cm) + ' cm' : '–');
+
+  // --- Bauteilliste ---
+  const teile = [];
+
+  // Pfosten (je nach Dachform ein oder zwei Einträge)
+  if (dachform === 'pult' && pfostenHoch_stk > 0) {
+    // Pfosten niedrig
+    {
+      const lfm = (pfLen_niedrig_fertig_cm / 100) * pfostenNiedrig_stk;
+      teile.push({
+        key: 'pfosten_niedrig', name: 'Pfosten niedrig',
+        anzahl: pfostenNiedrig_stk,
+        einzel_m: pfLen_niedrig_fertig_cm / 100,
+        lfm: lfm,
+        flaeche: (qs.pfosten.b / 100) * (qs.pfosten.h / 100),
+        volumen: lfm * (qs.pfosten.b / 100) * (qs.pfosten.h / 100),
+        sk: qs.pfosten.sk
+      });
+    }
+    // Pfosten hoch
+    {
+      const lfm = (pfLen_hoch_fertig_cm / 100) * pfostenHoch_stk;
+      teile.push({
+        key: 'pfosten_hoch', name: 'Pfosten hoch',
+        anzahl: pfostenHoch_stk,
+        einzel_m: pfLen_hoch_fertig_cm / 100,
+        lfm: lfm,
+        flaeche: (qs.pfosten.b / 100) * (qs.pfosten.h / 100),
+        volumen: lfm * (qs.pfosten.b / 100) * (qs.pfosten.h / 100),
+        sk: qs.pfosten.sk
+      });
+    }
+  } else {
+    const lfm = (pfLen_niedrig_fertig_cm / 100) * pfAnz;
+    teile.push({
+      key: 'pfosten', name: 'Pfosten',
+      anzahl: pfAnz,
+      einzel_m: pfLen_niedrig_fertig_cm / 100,
+      lfm: lfm,
+      flaeche: (qs.pfosten.b / 100) * (qs.pfosten.h / 100),
+      volumen: lfm * (qs.pfosten.b / 100) * (qs.pfosten.h / 100),
+      sk: qs.pfosten.sk
+    });
+  }
+
+  // Kopfband
+  if (kbAktiv && kbAnz > 0) {
+    teile.push({
+      key: 'kopfband', name: 'Kopfband', anzahl: kbAnz,
+      einzel_m: kbAusst * Math.SQRT2 / 100,
+      lfm: kopfbandLFM_m,
+      flaeche: (qs.kopfband.b / 100) * (qs.kopfband.h / 100),
+      volumen: kopfbandLFM_m * (qs.kopfband.b / 100) * (qs.kopfband.h / 100),
+      sk: qs.kopfband.sk
+    });
+  }
+
+  // Sparren
+  {
+    const lfm = sparrenEinzel_m * sparrenAnz;
+    teile.push({
+      key: 'sparren',
+      name: 'Sparren',
+      anzahl: sparrenAnz,
+      einzel_m: sparrenEinzel_m,
+      lfm: lfm,
+      flaeche: (qs.sparren.b / 100) * (qs.sparren.h / 100),
+      volumen: lfm * (qs.sparren.b / 100) * (qs.sparren.h / 100),
+      sk: qs.sparren.sk
+    });
+  }
+
+  // Pfetten
+  if (dachform === 'sattel') {
+    teile.push({
+      key: 'firstpfette', name: 'Firstpfette', anzahl: 1,
+      einzel_m: pfetteLaenge_m, lfm: pfetteLaenge_m,
+      flaeche: (qs.firstpfette.b / 100) * (qs.firstpfette.h / 100),
+      volumen: pfetteLaenge_m * (qs.firstpfette.b / 100) * (qs.firstpfette.h / 100),
+      sk: qs.firstpfette.sk
+    });
+    teile.push({
+      key: 'traufpfette', name: 'Traufpfette', anzahl: 2,
+      einzel_m: pfetteLaenge_m, lfm: pfetteLaenge_m * 2,
+      flaeche: (qs.pfette1.b / 100) * (qs.pfette1.h / 100),
+      volumen: pfetteLaenge_m * 2 * (qs.pfette1.b / 100) * (qs.pfette1.h / 100),
+      sk: qs.pfette1.sk
+    });
+    if (qbAnzahl > 0) {
+      const qbLFM = (qbLaenge_cm / 100) * qbAnzahl;
+      teile.push({
+        key: 'querbalken', name: 'Querbalken', anzahl: qbAnzahl,
+        einzel_m: qbLaenge_cm / 100,
+        lfm: qbLFM,
+        flaeche: (qs.querbalken.b / 100) * (qs.querbalken.h / 100),
+        volumen: qbLFM * (qs.querbalken.b / 100) * (qs.querbalken.h / 100),
+        sk: qs.querbalken.sk
+      });
+    }
+    if (firstStuetzenAnzahl > 0 && firstStuetze_cm > 0) {
+      const fsLFM = (firstStuetze_cm / 100) * firstStuetzenAnzahl;
+      teile.push({
+        key: 'firststuetze', name: 'First-Stütze', anzahl: firstStuetzenAnzahl,
+        einzel_m: firstStuetze_cm / 100,
+        lfm: fsLFM,
+        flaeche: (qs.firststuetze.b / 100) * (qs.firststuetze.h / 100),
+        volumen: fsLFM * (qs.firststuetze.b / 100) * (qs.firststuetze.h / 100),
+        sk: qs.firststuetze.sk
+      });
+    }
+  } else {
+    teile.push({
+      key: 'pfette1',
+      name: (dachform === 'pult' ? 'Pfette hoch' : 'Pfette 1'),
+      anzahl: 1,
+      einzel_m: pfetteLaenge_m, lfm: pfetteLaenge_m,
+      flaeche: (qs.pfette1.b / 100) * (qs.pfette1.h / 100),
+      volumen: pfetteLaenge_m * (qs.pfette1.b / 100) * (qs.pfette1.h / 100),
+      sk: qs.pfette1.sk
+    });
+    teile.push({
+      key: 'pfette2',
+      name: (dachform === 'pult' ? 'Pfette niedrig' : 'Pfette 2'),
+      anzahl: 1,
+      einzel_m: pfetteLaenge_m, lfm: pfetteLaenge_m,
+      flaeche: (qs.pfette2.b / 100) * (qs.pfette2.h / 100),
+      volumen: pfetteLaenge_m * (qs.pfette2.b / 100) * (qs.pfette2.h / 100),
+      sk: qs.pfette2.sk
+    });
+  }
+
+  // Custom Parts
+  customParts.forEach(cp => {
+    let lfm = cp.lfm;
+    // Falls Anzahl + Einzellänge gesetzt, daraus LFM bevorzugen
+    if (cp.anzahl > 0 && cp.einzel > 0) lfm = cp.anzahl * cp.einzel;
+    let flaeche = cp.flaeche;
+    if (flaeche <= 0 && cp.b > 0 && cp.h > 0) flaeche = (cp.b / 100) * (cp.h / 100);
+    teile.push({
+      key: 'custom_' + cp.id,
+      name: cp.name || ('Eigenes Bauteil ' + cp.id),
+      anzahl: cp.anzahl > 0 ? cp.anzahl : null,
+      einzel_m: cp.einzel > 0 ? cp.einzel : null,
+      lfm: lfm, flaeche: flaeche, volumen: lfm * flaeche, sk: cp.sk
+    });
+  });
+
+  // --- Summen ---
+  let sumLFM = 0, sumVol = 0;
+  const volSK = { 'KVH': 0, 'BSH': 0, 'KVH-Douglasie': 0 };
+  teile.forEach(t => {
+    sumLFM += t.lfm;
+    sumVol += t.volumen;
+    if (volSK[t.sk] !== undefined) volSK[t.sk] += t.volumen;
+  });
+  const lfmGes = sumLFM * zuschlag;
+  const m3Ges  = sumVol * zuschlag;
+  const m3KVH  = volSK['KVH'] * zuschlag;
+  const m3BSH  = volSK['BSH'] * zuschlag;
+  const m3Doug = volSK['KVH-Douglasie'] * zuschlag;
+
+  // --- Flächen ---
+  const grundflaeche_m2 = (L / 100) * (B / 100);
+  let dachflaeche_m2;
+  if (dachform === 'flach') {
+    dachflaeche_m2 = (L + 2 * uePfetten) / 100 * (B + 2 * ueSparren) / 100;
+  } else {
+    dachflaeche_m2 = (L + 2 * uePfetten) / 100 * ((B + 2 * ueSparren) / 100) / (cosN || 1);
+  }
+
+  // Zapfen — analog Excel: Pfosten + 2·Kopfbänder
+  let zapfen = pfAnz + (kbAktiv ? kbAnz * 2 : 0);
+  if (dachform === 'sattel') {
+    // Querbalken: je 2 Auflager + First-Stütze oben = 3 je Querbalken
+    zapfen += qbAnzahl * 2 + firstStuetzenAnzahl * 1;
+  }
+
+  // Zeit — Excel-Formel
+  const zeit_h = (lfmGes * 3 + lfmGes * 3.5) / 2.6 / 60;
+
+  // === EPDM (Werte sind oben global definiert, immer aktiv) ===
+  const epdmBreite_m = ((B + 2 * ueSparren) / 100 / (dachform === 'flach' ? 1 : (cosN || 1))) + 2 * (EPDM_RAND_CM / 100);
+  const epdmLaenge_m = (L + 2 * uePfetten) / 100 + 2 * (EPDM_RAND_CM / 100);
+  const epdmFlaeche  = epdmBreite_m * epdmLaenge_m;
+  const epdmKleber_L = epdmFlaeche * EPDM_KLEBER_L_PRO_M2;
+  const epdmNahtband_m = (L + 2 * uePfetten) / 100; // Traufe
+  const epdmAkt_ml = epdmNahtband_m * EPDM_AKTIVIERUNG_ML_PRO_M;
+
+  // --- Ausgabe ---
+  setText('r_lfm',          fmt(lfmGes, 2));
+  setText('r_m3',           fmt(m3Ges, 3));
+  setText('r_dachflaeche',  fmt(dachflaeche_m2, 2));
+  setText('r_grundflaeche', fmt(grundflaeche_m2, 2));
+  setText('r_zapfen',       fmtInt(zapfen));
+  setText('r_zeit',         fmt(zeit_h, 2));
+
+  setText('r_kvh',       fmt(m3KVH, 4));
+  setText('r_bsh',       fmt(m3BSH, 4));
+  setText('r_douglasie', fmt(m3Doug, 4));
+  setText('r_gesamt',    fmt(m3Ges, 4));
+
+  // Bauteilliste
+  const tbody = $('r_teile');
+  tbody.innerHTML = '';
+  teile.forEach(t => {
+    const anzTxt = (t.anzahl === null || t.anzahl === undefined) ? '—' : fmtInt(t.anzahl);
+    const einzTxt = (t.einzel_m === null || t.einzel_m === undefined || !isFinite(t.einzel_m)) ? '—' : fmt(t.einzel_m, 2);
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + escapeHtml(t.name) + '</td>' +
+      '<td>' + anzTxt + '</td>' +
+      '<td>' + einzTxt + '</td>' +
+      '<td>' + fmt(t.lfm, 2) + '</td>' +
+      '<td>' + fmt(t.flaeche, 4) + '</td>' +
+      '<td>' + fmt(t.volumen, 4) + '</td>' +
+      '<td>' + escapeHtml(t.sk) + '</td>';
+    tbody.appendChild(tr);
+  });
+  // Summenzeile
+  {
+    const tr = document.createElement('tr');
+    tr.className = 'sum-row';
+    tr.innerHTML =
+      '<td>Summe (inkl. ' + zuschlagProz + ' % Zuschlag)</td>' +
+      '<td>—</td>' +
+      '<td>—</td>' +
+      '<td>' + fmt(lfmGes, 2) + '</td>' +
+      '<td>—</td>' +
+      '<td>' + fmt(m3Ges, 4) + '</td>' +
+      '<td>—</td>';
+    tbody.appendChild(tr);
+  }
+
+  // EPDM immer anzeigen
+  $('r_epdm_block').style.display = 'block';
+  setText('r_epdm_b',           fmt(epdmBreite_m, 2));
+  setText('r_epdm_l',           fmt(epdmLaenge_m, 2));
+  setText('r_epdm_flaeche',     fmt(epdmFlaeche, 2));
+  setText('r_epdm_kleber',      fmt(epdmKleber_L, 2));
+  setText('r_epdm_nahtband',    fmt(epdmNahtband_m, 2));
+  setText('r_epdm_aktivierung', fmt(epdmAkt_ml, 1));
+
+  // Wand-Block aktuell nicht aktiv
+  $('r_wand_block').style.display = 'none';
+
+  // --- Warnungen (allgemein) ---
+  const warns = [];
+  if (dachform !== 'flach' && neigung < 3) warns.push('Neigung < 3° bei ' + dachform + '-Dach ist sehr flach — bitte prüfen.');
+  if (dachform === 'flach' && neigung > 10) warns.push('Flachdach mit > 10° Neigung? Eher Pult-/Satteldach wählen.');
+  if (spAbst <= 0) warns.push('Sparrenabstand muss > 0 sein.');
+  if (kbAktiv && kbAnz > pfAnz * 2) warns.push('Mehr Kopfbänder als 2 pro Pfosten — unrealistisch.');
+  if (pfAnz < 4) warns.push('Weniger als 4 Pfosten ist statisch grenzwertig.');
+  if (pfLen_niedrig_cm < 100) warns.push('Errechnete Pfostenlänge < 100 cm — bitte Zielhöhe oder Dachaufbau prüfen.');
+  if (dachform === 'sattel' && firstStuetze_cm <= 0 && qbAnzahl > 0) warns.push('First-Stütze hat Länge 0 — Firstpfette liegt direkt auf Querbalken, evtl. nicht realistisch.');
+
+  const wb = $('warn_box');
+  if (warns.length > 0) {
+    wb.style.display = 'block';
+    wb.innerHTML = '<strong>Hinweis:</strong><ul style="margin:6px 0 0 18px;padding:0;">' +
+      warns.map(w => '<li>' + escapeHtml(w) + '</li>').join('') + '</ul>';
+  } else {
+    wb.style.display = 'none';
+  }
+
+  // --- Visualisierung ---
+  const vizParams = {
+    L, B,
+    ueL: uePfetten, ueQ: ueSparren,
+    pH: pfLen_niedrig_cm,
+    pH_hoch: (dachform === 'pult' ? pfLen_niedrig_cm + B * tanN : null),
+    neigung: n, dachform,
+    kbAktiv, kbAusst,
+    pfAnz,
+    // Satteldach-Zusatz
+    qbAnzahl, qbLaenge_cm,
+    firstStuetze_cm, firstStuetzenAnzahl,
+    // Querschnitte für Labels
+    qs,
+    // Einzellängen für Labels
+    sparrenEinzel_m,
+    pfetteLaenge_m,
+    // Pfosten-Fertigungslängen (inkl. Zapfen)
+    pfLen_niedrig_fertig_cm,
+    pfLen_hoch_fertig_cm,
+    // Höhen-Bezug für Bemaßung
+    hoehenBezug: effektiverHB,
+    zielHoehe
+  };
+  drawGrundriss(vizParams);
+  drawSchnitt(vizParams);
+  drawSeite(vizParams);
+}
+
+// ============================================================
+// VISUALISIERUNG (SVG) — v2: mit Satteldach-Zusatz, Pult zweiseitig, Labels
+// ============================================================
+
+// Hilfsfunktion: Text mit Hintergrund (für bessere Lesbarkeit auf Linien)
+function labelBox(x, y, text, anchor) {
+  anchor = anchor || 'middle';
+  const padding = 3;
+  // geschätzte Textbreite
+  const w = text.length * 6 + padding * 2;
+  const h = 14;
+  let bx = x - w / 2;
+  if (anchor === 'start') bx = x - padding;
+  else if (anchor === 'end') bx = x - w + padding;
+  const by = y - h + 3;
+  return `<rect x="${bx}" y="${by}" width="${w}" height="${h}" fill="var(--bg-elev)" opacity="0.85" rx="2"/>` +
+         `<text x="${x}" y="${y}" text-anchor="${anchor}" fill="var(--text)" font-size="10" font-weight="600">${text}</text>`;
+}
+
+function berechnePfostenPositionen(pfAnz, x, y, w, h) {
+  const coords = [];
+  // 4 Ecken sind immer da
+  coords.push({ x: x, y: y });
+  coords.push({ x: x + w, y: y });
+  coords.push({ x: x, y: y + h });
+  coords.push({ x: x + w, y: y + h });
+
+  if (pfAnz === 4) return coords;
+
+  // Restliche Pfosten: entlang der beiden Längsseiten verteilen
+  const zusatz = pfAnz - 4;
+  const proSeite = Math.ceil(zusatz / 2);
+  for (let i = 1; i <= proSeite; i++) {
+    const t = i / (proSeite + 1);
+    coords.push({ x: x + t * w, y: y });
+    if (coords.length < pfAnz) coords.push({ x: x + t * w, y: y + h });
+  }
+  return coords.slice(0, pfAnz);
+}
+
+function drawGrundriss(p) {
+  const { L, B, ueL, ueQ, pfAnz, dachform, qbAnzahl, qs, pfetteLaenge_m } = p;
+  const svg = $('svg_grundriss');
+  const totalL = L + 2 * ueL;
+  const totalB = B + 2 * ueQ;
+  const availW = SVG_W - 2 * SVG_PADDING;
+  const availH = SVG_H - 2 * SVG_PADDING;
+  const scale = Math.min(availW / totalL, availH / totalB);
+  const w = totalL * scale;
+  const h = totalB * scale;
+  const offX = (SVG_W - w) / 2;
+  const offY = (SVG_H - h) / 2;
+
+  const innerW = L * scale;
+  const innerH = B * scale;
+  const innerX = offX + ueL * scale;
+  const innerY = offY + ueQ * scale;
+
+  let s = '';
+
+  // Dach-Umriss (gestrichelt = Überstand)
+  s += `<rect x="${offX}" y="${offY}" width="${w}" height="${h}" fill="var(--viz-fill)" stroke="var(--viz-hauptdach)" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5"/>`;
+  // Carport-Innenfläche
+  s += `<rect x="${innerX}" y="${innerY}" width="${innerW}" height="${innerH}" fill="var(--viz-fill)" stroke="var(--viz-hauptdach)" stroke-width="2"/>`;
+
+  // Pfetten (Längslinien)
+  if (dachform === 'pult') {
+    // Pfette hoch (oben im Bild), Pfette niedrig (unten im Bild)
+    s += `<line x1="${innerX}" y1="${innerY}" x2="${innerX + innerW}" y2="${innerY}" stroke="var(--viz-pfette)" stroke-width="4"/>`;
+    s += labelBox(innerX + innerW/2, innerY - 4, 'Pfette hoch (' + fmt(pfetteLaenge_m, 2) + ' m)');
+    s += `<line x1="${innerX}" y1="${innerY + innerH}" x2="${innerX + innerW}" y2="${innerY + innerH}" stroke="var(--viz-pfette)" stroke-width="4"/>`;
+    s += labelBox(innerX + innerW/2, innerY + innerH + 14, 'Pfette niedrig (' + fmt(pfetteLaenge_m, 2) + ' m)');
+  } else {
+    s += `<line x1="${innerX}" y1="${innerY}" x2="${innerX + innerW}" y2="${innerY}" stroke="var(--viz-pfette)" stroke-width="4"/>`;
+    s += labelBox(innerX + innerW/2, innerY - 4, (dachform==='sattel'?'Traufpfette':'Pfette 1') + ' (' + fmt(pfetteLaenge_m, 2) + ' m)');
+    s += `<line x1="${innerX}" y1="${innerY + innerH}" x2="${innerX + innerW}" y2="${innerY + innerH}" stroke="var(--viz-pfette)" stroke-width="4"/>`;
+    s += labelBox(innerX + innerW/2, innerY + innerH + 14, (dachform==='sattel'?'Traufpfette':'Pfette 2') + ' (' + fmt(pfetteLaenge_m, 2) + ' m)');
+  }
+
+  // Firstpfette (nur Sattel, Mittellinie)
+  if (dachform === 'sattel') {
+    const firstY = innerY + innerH / 2;
+    s += `<line x1="${innerX}" y1="${firstY}" x2="${innerX + innerW}" y2="${firstY}" stroke="var(--viz-pfette)" stroke-width="3" stroke-dasharray="8,3"/>`;
+    s += labelBox(innerX + innerW/2, firstY - 4, 'Firstpfette (' + fmt(pfetteLaenge_m, 2) + ' m)');
+  }
+
+  // Querbalken (nur Sattel)
+  if (dachform === 'sattel' && qbAnzahl > 0) {
+    // Querbalken gleichmäßig entlang der Länge verteilen
+    for (let i = 0; i < qbAnzahl; i++) {
+      const t = (i + 1) / (qbAnzahl + 1);
+      const qbX = innerX + t * innerW;
+      s += `<line x1="${qbX}" y1="${innerY}" x2="${qbX}" y2="${innerY + innerH}" stroke="var(--viz-kopfband)" stroke-width="2.5" stroke-dasharray="4,3"/>`;
+    }
+    s += labelBox(innerX + innerW/2, innerY + innerH/2 + 16, 'Querbalken: ' + qbAnzahl + ' stk à ' + B + ' cm');
+  }
+
+  // Pfosten als Punkte
+  const pfostenCoords = berechnePfostenPositionen(pfAnz, innerX, innerY, innerW, innerH);
+  pfostenCoords.forEach(pt => {
+    // Pfosten als kleines Quadrat (realistischer als Kreis)
+    const qsB = (qs ? qs.pfosten.b : 12);
+    const sz = Math.max(6, qsB * scale * 0.6);
+    s += `<rect x="${pt.x - sz/2}" y="${pt.y - sz/2}" width="${sz}" height="${sz}" fill="var(--viz-pfosten)" stroke="#000" stroke-width="0.5"/>`;
+  });
+
+  // Maße
+  s += bemassung(offX, offY - 28, offX + w, offY - 28, totalL + ' cm (über alles)', 'h');
+  s += bemassung(offX - 32, offY, offX - 32, offY + h, totalB + ' cm', 'v');
+  s += bemassung(innerX, offY + h + 26, innerX + innerW, offY + h + 26, L + ' cm (Länge)', 'h');
+  s += bemassung(offX + w + 26, innerY, offX + w + 26, innerY + innerH, B + ' cm (Breite)', 'v');
+
+  // Überstand-Annotation
+  if (ueL > 0) {
+    s += `<text x="${offX + ueL*scale/2}" y="${offY + h/2}" text-anchor="middle" fill="var(--viz-mass)" font-size="10" font-style="italic">ÜL ${ueL}</text>`;
+  }
+  if (ueQ > 0) {
+    s += `<text x="${offX + w/2}" y="${offY + ueQ*scale/2 + 4}" text-anchor="middle" fill="var(--viz-mass)" font-size="10" font-style="italic">ÜQ ${ueQ}</text>`;
+  }
+
+  // Titel
+  const titel = 'Grundriss · ' + dachform.toUpperCase();
+  s += `<text x="${offX + w/2}" y="${Math.max(20, offY - 42)}" text-anchor="middle" fill="var(--heading)" font-size="13" font-weight="600">${titel}</text>`;
+
+  // Legende
+  const legItems = [
+    { farbe: 'var(--viz-hauptdach)', text: 'Dach-Umriss' },
+    { farbe: 'var(--viz-pfette)', text: 'Pfetten' },
+    { farbe: 'var(--viz-pfosten)', text: 'Pfosten' }
+  ];
+  if (dachform === 'sattel' && qbAnzahl > 0) legItems.push({ farbe: 'var(--viz-kopfband)', text: 'Querbalken' });
+  s += legende(legItems, 15, 478);
+
+  svg.innerHTML = s;
+}
+
+function drawSchnitt(p) {
+  const { L, B, ueQ, pH, pH_hoch, neigung, dachform, kbAktiv, kbAusst,
+          qbAnzahl, firstStuetze_cm, qs, sparrenEinzel_m,
+          pfLen_niedrig_fertig_cm, pfLen_hoch_fertig_cm,
+          hoehenBezug, zielHoehe } = p;
+
+  const svg = $('svg_schnitt');
+  const totalB = B + 2 * ueQ;
+
+  // Trigonometrie (lokal) — nur wenn geneigt
+  const cosN = Math.cos(toRad(neigung));
+  const tanN = Math.tan(toRad(neigung));
+
+  // Dach-Aufschlag (für Canvas-Skalierung)
+  let dachHoehe = 10;
+  if (dachform === 'pult')   dachHoehe = B * tanN;
+  if (dachform === 'sattel') dachHoehe = (B / 2) * tanN;
+
+  // Max. Pfostenhöhe bestimmen (für Canvas-Skalierung)
+  const pHmax = (dachform === 'pult' && pH_hoch) ? pH_hoch : pH;
+  const totalH = pHmax + dachHoehe + 40;
+
+  const scale = Math.min((SVG_W - 2*SVG_PADDING) / totalB, (SVG_H - 2*SVG_PADDING) / totalH);
+  const w = totalB * scale;
+  const h = totalH * scale;
+  const offX = (SVG_W - w) / 2;
+  const offY = SVG_H - SVG_PADDING - h;
+
+  const innerW = B * scale;
+  const innerX = offX + ueQ * scale;
+  const bodenY = offY + h;
+
+  // Querschnitts-Daten (für Rechteckbreiten im Schnitt)
+  const pfostenB = qs ? qs.pfosten.b : 12;
+  const pfetteH_cm = qs ? qs.pfette1.h : 20;
+  const sparrenH_cm = qs ? qs.sparren.h : 20;
+  const firstpfH_cm = qs ? qs.firstpfette.h : 20;
+  const querbH_cm = qs ? qs.querbalken.h : 16;
+
+  const pfostenBpx = Math.max(6, pfostenB * scale);
+  const pfetteHpx  = Math.max(4, pfetteH_cm * scale);
+  const sparrenHpx = Math.max(3, sparrenH_cm * scale);
+  const firstpfHpx = Math.max(4, firstpfH_cm * scale);
+  const querbHpx   = Math.max(4, querbH_cm * scale);
+
+  // Pfosten-Oberkante (=UK Pfette) für niedrige Seite
+  const pfostenOben_links = bodenY - pH * scale;
+  // Rechte Pfostenoberkante
+  let pfostenOben_rechts;
+  if (dachform === 'pult') {
+    pfostenOben_rechts = bodenY - pH_hoch * scale;
+  } else {
+    pfostenOben_rechts = pfostenOben_links;
+  }
+
+  let s = '';
+
+  // Boden mit Schraffur
+  s += `<line x1="${offX - 30}" y1="${bodenY}" x2="${offX + w + 30}" y2="${bodenY}" stroke="var(--viz-mass)" stroke-width="2"/>`;
+  for (let i = 0; i < 14; i++) {
+    const bx = offX - 30 + i * (w + 60) / 14;
+    s += `<line x1="${bx}" y1="${bodenY}" x2="${bx + 8}" y2="${bodenY + 10}" stroke="var(--viz-mass)" stroke-width="1"/>`;
+  }
+
+  // === PFOSTEN (Rechtecke) ===
+  // Links
+  s += `<rect x="${innerX - pfostenBpx/2}" y="${pfostenOben_links}" width="${pfostenBpx}" height="${bodenY - pfostenOben_links}" fill="var(--viz-pfosten)" stroke="#000" stroke-width="0.5"/>`;
+  // Rechts
+  s += `<rect x="${innerX + innerW - pfostenBpx/2}" y="${pfostenOben_rechts}" width="${pfostenBpx}" height="${bodenY - pfostenOben_rechts}" fill="var(--viz-pfosten)" stroke="#000" stroke-width="0.5"/>`;
+
+  // Pfosten-Labels (Fertigungslänge inkl. Zapfen)
+  if (dachform === 'pult') {
+    s += labelBox(innerX - pfostenBpx/2 - 4, pfostenOben_links + (bodenY - pfostenOben_links)/2 + 3, Math.round(pfLen_niedrig_fertig_cm) + ' cm', 'end');
+    s += labelBox(innerX + innerW + pfostenBpx/2 + 4, pfostenOben_rechts + (bodenY - pfostenOben_rechts)/2 + 3, Math.round(pfLen_hoch_fertig_cm) + ' cm', 'start');
+  } else {
+    s += labelBox(innerX - pfostenBpx/2 - 4, pfostenOben_links + (bodenY - pfostenOben_links)/2 + 3, Math.round(pfLen_niedrig_fertig_cm) + ' cm', 'end');
+    s += labelBox(innerX + innerW + pfostenBpx/2 + 4, pfostenOben_rechts + (bodenY - pfostenOben_rechts)/2 + 3, Math.round(pfLen_niedrig_fertig_cm) + ' cm', 'start');
+  }
+
+  // === PFETTEN (Rechtecke im Schnitt = sichtbar als Querschnitt-Kasten) ===
+  // Fußpfetten links und rechts
+  s += `<rect x="${innerX - pfostenBpx/2}" y="${pfostenOben_links}" width="${pfostenBpx}" height="${pfetteHpx}" fill="var(--viz-pfette)" stroke="#000" stroke-width="0.5"/>`;
+  s += `<rect x="${innerX + innerW - pfostenBpx/2}" y="${pfostenOben_rechts}" width="${pfostenBpx}" height="${pfetteHpx}" fill="var(--viz-pfette)" stroke="#000" stroke-width="0.5"/>`;
+
+  // === DACH/SPARREN ===
+  // UK Sparren liegt MIT UK auf OK Pfette auf (keine Stufe, kein Abstand).
+  // Die 3 cm Kerve ist ein innerer Abzug im Auflagerbereich (rechtwinklig zur Dachfläche).
+  // Rechnerisch beeinflusst die Kerve die OK-Dach-Höhe NICHT.
+  const kerveLot_cm = SPARREN_KERVE_CM / (cosN || 1);
+  const kerveLotPx = (dachform === 'flach') ? 0 : kerveLot_cm * scale;
+
+  // OK Pfette (Auflage-Ebene für UK Sparren)
+  const okPfette_L = pfostenOben_links  + pfetteHpx;
+  const okPfette_R = pfostenOben_rechts + pfetteHpx;
+  // UK Sparren liegt HIER (keine Kerv-Verschiebung nach oben mehr!)
+  const ySparrenUK_Links  = okPfette_L;
+  const ySparrenUK_Rechts = okPfette_R;
+
+  if (dachform === 'flach') {
+    // Flach: UK Sparren = OK Pfette
+    const yUK = ySparrenUK_Links;
+    const yOK = yUK - sparrenHpx;
+    s += `<rect x="${offX}" y="${yOK}" width="${w}" height="${sparrenHpx}" fill="var(--viz-sparren)" opacity="0.7" stroke="var(--viz-hauptdach)" stroke-width="1"/>`;
+    s += `<line x1="${offX}" y1="${yOK}" x2="${offX + w}" y2="${yOK}" stroke="var(--viz-hauptdach)" stroke-width="2.5"/>`;
+    s += labelBox(offX + w/2, yOK - 4, 'Sparren ' + fmt(sparrenEinzel_m, 2) + ' m');
+  } else if (dachform === 'pult') {
+    // UK Sparren verläuft schräg von okPfette_L (links, unten) nach okPfette_R (rechts, oben)
+    const dyUe = ueQ * tanN * scale;
+    const yUK_L = ySparrenUK_Links  + dyUe;   // Überstand links: schräg weiter nach unten
+    const yUK_R = ySparrenUK_Rechts - dyUe;   // Überstand rechts: schräg weiter nach oben (niedriger y)
+    const yOK_L = yUK_L - sparrenHpx;
+    const yOK_R = yUK_R - sparrenHpx;
+    // Sparren-Polygon
+    s += `<polygon points="${offX},${yUK_L} ${offX + w},${yUK_R} ${offX + w},${yOK_R} ${offX},${yOK_L}" fill="var(--viz-sparren)" opacity="0.7" stroke="var(--viz-hauptdach)" stroke-width="1"/>`;
+    s += `<line x1="${offX}" y1="${yOK_L}" x2="${offX + w}" y2="${yOK_R}" stroke="var(--viz-hauptdach)" stroke-width="2.5"/>`;
+    s += labelBox(offX + w/2, (yOK_L + yOK_R)/2 - 4, 'Sparren ' + fmt(sparrenEinzel_m, 2) + ' m');
+    // Kerv-Andeutung: kleine Aussparung im Sparren AN DER OBEREN INNENKANTE über der Pfette
+    // (Kerve liegt innerhalb des Sparrens, ragt kerveLotPx rechtwinklig nach oben in den Sparren)
+    // Vereinfacht als kleines Rechteck oberhalb des UK-Sparrens über der Pfetten-Breite
+    // Es zeigt den ausgeklinkten Bereich AM AUFLAGER
+    // Da die UK-Sparren-Linie hier schon OK Pfette trifft, ist die Kerve die Verbreiterung NACH OBEN
+    // die nicht sichtbar ist, wenn der Sparren über der Pfette weitergeht. Wir zeichnen sie dezent als
+    // gestrichelte Linie innerhalb des Sparren-Polygons.
+    if (kerveLotPx > 1) {
+      // Linie kerveLot über UK Sparren, über Pfetten-Breite (von InnenSeitenkante bis Pfetten-Mittelachse)
+      // → zeigt die Ausklinkungs-Tiefe
+      const yKerveLinks = ySparrenUK_Links - kerveLotPx;
+      const yKerveRechts = ySparrenUK_Rechts - kerveLotPx;
+      s += `<line x1="${innerX - pfostenBpx/2}" y1="${yKerveLinks}" x2="${innerX + pfostenBpx/2}" y2="${yKerveLinks}" stroke="var(--viz-hauptdach)" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+      s += `<line x1="${innerX + innerW - pfostenBpx/2}" y1="${yKerveRechts}" x2="${innerX + innerW + pfostenBpx/2}" y2="${yKerveRechts}" stroke="var(--viz-hauptdach)" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+    }
+  } else {
+    // Sattel
+    // UK Sparren (First-Achse) = OK Pfette − 3/cos(α) + (B/2)·tan(α)
+    const xMitte = innerX + innerW/2;
+    const yUK_First  = ySparrenUK_Links - (B/2) * tanN * scale; // steigt von Pfette zum First
+    const yOK_First  = yUK_First - sparrenHpx;
+    // Traufenpunkte außen (mit Überstand, nach unten)
+    const dyUe = ueQ * tanN * scale;
+    const yUK_L = ySparrenUK_Links + dyUe;
+    const yUK_R = ySparrenUK_Rechts + dyUe;
+    const yOK_L = yUK_L - sparrenHpx;
+    const yOK_R = yUK_R - sparrenHpx;
+
+    // Sparren linke Hälfte
+    s += `<polygon points="${offX},${yUK_L} ${xMitte},${yUK_First} ${xMitte},${yOK_First} ${offX},${yOK_L}" fill="var(--viz-sparren)" opacity="0.6" stroke="var(--viz-hauptdach)" stroke-width="1"/>`;
+    // Sparren rechte Hälfte
+    s += `<polygon points="${xMitte},${yUK_First} ${offX + w},${yUK_R} ${offX + w},${yOK_R} ${xMitte},${yOK_First}" fill="var(--viz-sparren)" opacity="0.6" stroke="var(--viz-hauptdach)" stroke-width="1"/>`;
+
+    // Dach-Linie OK (obere Kante)
+    s += `<line x1="${offX}" y1="${yOK_L}" x2="${xMitte}" y2="${yOK_First}" stroke="var(--viz-hauptdach)" stroke-width="2.5"/>`;
+    s += `<line x1="${xMitte}" y1="${yOK_First}" x2="${offX + w}" y2="${yOK_R}" stroke="var(--viz-hauptdach)" stroke-width="2.5"/>`;
+
+    // Sparren-Label
+    s += labelBox((offX + xMitte)/2, (yOK_L + yOK_First)/2 - 4, 'Sparren ' + fmt(sparrenEinzel_m, 2) + ' m');
+
+    // === FIRSTPFETTE (Rechteck an der Firstposition) ===
+    // OK Firstpfette = UK Sparren an der First-Achse (Sparren liegt mit UK auf OK Firstpfette)
+    const firstpfB = qs ? qs.firstpfette.b : 12;
+    const firstpfBpx = Math.max(6, firstpfB * scale);
+    const okFirstpfY = yUK_First;
+    s += `<rect x="${xMitte - firstpfBpx/2}" y="${okFirstpfY}" width="${firstpfBpx}" height="${firstpfHpx}" fill="var(--viz-pfette)" stroke="#000" stroke-width="0.5"/>`;
+    s += labelBox(xMitte, okFirstpfY - 4, 'Firstpfette');
+
+    // Kerv-Andeutung: gestrichelte Linien kerveLot über UK Sparren über den Auflagerbreiten
+    if (kerveLotPx > 1) {
+      // Fußpfette links
+      const yKerveFussL = ySparrenUK_Links - kerveLotPx;
+      s += `<line x1="${innerX - pfostenBpx/2}" y1="${yKerveFussL}" x2="${innerX + pfostenBpx/2}" y2="${yKerveFussL}" stroke="var(--viz-hauptdach)" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+      // Fußpfette rechts
+      const yKerveFussR = ySparrenUK_Rechts - kerveLotPx;
+      s += `<line x1="${innerX + innerW - pfostenBpx/2}" y1="${yKerveFussR}" x2="${innerX + innerW + pfostenBpx/2}" y2="${yKerveFussR}" stroke="var(--viz-hauptdach)" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+      // Firstpfette (oberhalb UK Sparren, kerveLot rechtwinklig)
+      const yKerveFirst = yUK_First - kerveLotPx;
+      s += `<line x1="${xMitte - firstpfBpx/2}" y1="${yKerveFirst}" x2="${xMitte + firstpfBpx/2}" y2="${yKerveFirst}" stroke="var(--viz-hauptdach)" stroke-width="0.8" stroke-dasharray="2,2"/>`;
+    }
+
+    // === QUERBALKEN (horizontal auf Fußpfetten) ===
+    if (qbAnzahl > 0) {
+      // Querbalken liegt auf den Fußpfetten (OK Pfette)
+      const qbY = okPfette_L;
+      s += `<rect x="${innerX}" y="${qbY - querbHpx/2}" width="${innerW}" height="${querbHpx}" fill="var(--viz-kopfband)" opacity="0.75" stroke="#000" stroke-width="0.5"/>`;
+      s += labelBox(innerX + innerW * 0.25, qbY + querbHpx/2 + 12, 'Querbalken ' + B + ' cm');
+
+      // === FIRST-STÜTZE (vertikal zwischen Querbalken OK und Firstpfette UK) ===
+      if (firstStuetze_cm > 0) {
+        const fsTop = okFirstpfY + firstpfHpx; // UK Firstpfette
+        const fsBot = qbY - querbHpx/2;         // OK Querbalken
+        const firstStB = qs ? qs.firststuetze.b : 12;
+        const fsBpx = Math.max(4, firstStB * scale);
+        s += `<rect x="${xMitte - fsBpx/2}" y="${fsTop}" width="${fsBpx}" height="${fsBot - fsTop}" fill="var(--viz-pfosten)" stroke="#000" stroke-width="0.5"/>`;
+        s += labelBox(xMitte + fsBpx/2 + 4, (fsTop + fsBot)/2 + 3, 'First-Stütze ' + Math.round(firstStuetze_cm) + ' cm', 'start');
+      }
+    }
+  }
+
+  // Kopfband (Pfosten-Pfetten-Verstrebung, als diagonale Linie)
+  if (kbAktiv && kbAusst > 0) {
+    const kbLen = kbAusst * scale;
+    // Links: unten am Pfosten (Austritt), oben an Pfette
+    s += `<line x1="${innerX + pfostenBpx/2}" y1="${pfostenOben_links + kbLen}" x2="${innerX + pfostenBpx/2 + kbLen}" y2="${pfostenOben_links}" stroke="var(--viz-kopfband)" stroke-width="2.5"/>`;
+    // Rechts: spiegelverkehrt
+    s += `<line x1="${innerX + innerW - pfostenBpx/2}" y1="${pfostenOben_rechts + kbLen}" x2="${innerX + innerW - pfostenBpx/2 - kbLen}" y2="${pfostenOben_rechts}" stroke="var(--viz-kopfband)" stroke-width="2.5"/>`;
+  }
+
+  // === MASSE ===
+  s += bemassung(innerX, bodenY + 30, innerX + innerW, bodenY + 30, B + ' cm (Breite innen)', 'h');
+  s += bemassung(offX, bodenY + 52, offX + w, bodenY + 52, totalB + ' cm (über Dach)', 'h');
+  // Pfostenlänge (Boden → UK Pfette) — immer links
+  s += bemassung(offX - 45, pfostenOben_links, offX - 45, bodenY, Math.round(pH) + ' cm · UK Pfette', 'v');
+  if (dachform === 'pult') {
+    s += bemassung(offX + w + 45, pfostenOben_rechts, offX + w + 45, bodenY, Math.round(pH_hoch) + ' cm · UK Pfette hoch', 'v');
+  }
+
+  // Bemaßung der Zielhöhe entsprechend dem Bezug (zusätzliche Hilfslinie)
+  // Bezugs-Y-Position auf der rechten Seite
+  let bezugY = null;
+  let bezugLabel = '';
+  if (hoehenBezug === 'uk_pfette' || hoehenBezug === 'uk_pfette_niedrig' || hoehenBezug === 'uk_pfette_fuss') {
+    bezugY = pfostenOben_links; bezugLabel = 'UK Pfette';
+  } else if (hoehenBezug === 'uk_pfette_hoch') {
+    bezugY = pfostenOben_rechts; bezugLabel = 'UK Pfette hoch';
+  } else if (hoehenBezug === 'uk_firstpfette' && dachform === 'sattel') {
+    bezugY = okPfette_L - (B/2) * tanN * scale + firstpfHpx; bezugLabel = 'UK Firstpfette';
+  } else if (hoehenBezug === 'ok_dach_trauf') {
+    // OK Dach an Trauf-Außenkante (niedrige Seite bei Pult, Traufe bei Sattel)
+    bezugY = okPfette_L - kerveLotPx + (dachform === 'flach' ? 0 : ueQ * tanN * scale) - sparrenHpx;
+    bezugLabel = 'OK Dach Traufe';
+  } else if (hoehenBezug === 'ok_dach_first') {
+    if (dachform === 'pult') {
+      bezugY = okPfette_R - kerveLotPx - ueQ * tanN * scale - sparrenHpx;
+    } else if (dachform === 'sattel') {
+      bezugY = okPfette_L - kerveLotPx - (B/2) * tanN * scale - sparrenHpx;
+    }
+    bezugLabel = 'OK Dach First';
+  }
+  if (bezugY !== null && Math.abs(bezugY - pfostenOben_links) > 2) {
+    // Nur anzeigen wenn sie sich merklich von der Pfostenlängen-Bemaßung unterscheidet
+    s += bemassung(offX - 90, bezugY, offX - 90, bodenY, Math.round(zielHoehe) + ' cm · ' + bezugLabel, 'v');
+  }
+
+  // Titel
+  const nTxt = (dachform !== 'flach') ? ' · ' + fmt(neigung, 1) + '°' : '';
+  s += `<text x="${offX + w/2}" y="${Math.max(18, offY - 8)}" text-anchor="middle" fill="var(--heading)" font-size="13" font-weight="600">Schnitt · ${dachform.toUpperCase()}${nTxt}</text>`;
+
+  // Legende
+  const legItems = [
+    { farbe: 'var(--viz-hauptdach)', text: 'Dach' },
+    { farbe: 'var(--viz-sparren)', text: 'Sparren' },
+    { farbe: 'var(--viz-pfette)', text: 'Pfetten' },
+    { farbe: 'var(--viz-pfosten)', text: 'Pfosten' }
+  ];
+  if (kbAktiv) legItems.push({ farbe: 'var(--viz-kopfband)', text: 'Kopfband/QB' });
+  s += legende(legItems, 15, 478);
+
+  svg.innerHTML = s;
+}
+
+function drawSeite(p) {
+  const { L, B, ueL, pH, pH_hoch, neigung, dachform, pfAnz, qs,
+          pfLen_niedrig_fertig_cm, pfLen_hoch_fertig_cm, qbAnzahl } = p;
+  const svg = $('svg_seite');
+  const totalL = L + 2 * ueL;
+
+  // Trigonometrie (lokal)
+  const tanN = Math.tan(toRad(neigung));
+
+  // Seitenansicht zeigt die Giebelseite (Pfetten in die Tiefe, Pfosten nebeneinander)
+  let dachAufschlag = 10;
+  if (dachform === 'pult')   dachAufschlag = B * tanN;
+  if (dachform === 'sattel') dachAufschlag = (B / 2) * tanN;
+  const pHmax = (dachform === 'pult' && pH_hoch) ? pH_hoch : pH;
+  const totalH = pHmax + dachAufschlag + 40;
+
+  const scale = Math.min((SVG_W - 2*SVG_PADDING) / totalL, (SVG_H - 2*SVG_PADDING) / totalH);
+  const w = totalL * scale;
+  const h = totalH * scale;
+  const offX = (SVG_W - w) / 2;
+  const offY = SVG_H - SVG_PADDING - h;
+
+  const innerW = L * scale;
+  const innerX = offX + ueL * scale;
+  const bodenY = offY + h;
+
+  // Querschnitte
+  const pfostenB = qs ? qs.pfosten.b : 12;
+  const pfetteH_cm = qs ? qs.pfette1.h : 20;
+  const pfostenBpx = Math.max(6, pfostenB * scale);
+  const pfetteHpx  = Math.max(4, pfetteH_cm * scale);
+
+  // Pfosten-Höhe — in der Seitenansicht zeigen wir eine Pfostenreihe
+  // Bei Pult: wir zeigen die niedrige Seite (Sichtbar vom Eingang her)
+  const pfostenObenY = bodenY - pH * scale;
+  const dachObenY = pfostenObenY - dachAufschlag * scale;
+
+  let s = '';
+  // Boden
+  s += `<line x1="${offX - 30}" y1="${bodenY}" x2="${offX + w + 30}" y2="${bodenY}" stroke="var(--viz-mass)" stroke-width="2"/>`;
+  for (let i = 0; i < 14; i++) {
+    const bx = offX - 30 + i * (w + 60) / 14;
+    s += `<line x1="${bx}" y1="${bodenY}" x2="${bx + 8}" y2="${bodenY + 10}" stroke="var(--viz-mass)" stroke-width="1"/>`;
+  }
+
+  // Dach als Rechteck (Projektion von oben)
+  if (dachform === 'flach') {
+    s += `<rect x="${offX}" y="${pfostenObenY - 8}" width="${w}" height="8" fill="var(--viz-hauptdach)" opacity="0.5"/>`;
+  } else if (dachform === 'pult') {
+    // Pultdach als schräge Fläche — projiziert
+    s += `<rect x="${offX}" y="${pfostenObenY - 8}" width="${w}" height="8" fill="var(--viz-hauptdach)" opacity="0.5"/>`;
+  } else {
+    // Satteldach — man sieht First von der Seite
+    s += `<rect x="${offX}" y="${dachObenY - 8}" width="${w}" height="8" fill="var(--viz-hauptdach)" opacity="0.5"/>`;
+  }
+
+  // Pfetten (Seitenansicht zeigt Pfette in voller Länge + Überstände)
+  s += `<rect x="${offX}" y="${pfostenObenY}" width="${w}" height="${pfetteHpx}" fill="var(--viz-pfette)" stroke="#000" stroke-width="0.5"/>`;
+  s += labelBox(offX + w/2, pfostenObenY + pfetteHpx/2 + 3, 'Pfette ' + fmt(L/100 + 2*ueL/100, 2) + ' m');
+
+  // Pfosten entlang der Pfetten-Richtung
+  const seitenPfAnz = Math.ceil(pfAnz / 2);
+  for (let i = 0; i < seitenPfAnz; i++) {
+    let px;
+    if (seitenPfAnz === 1) px = innerX + innerW/2;
+    else px = innerX + i * innerW / (seitenPfAnz - 1);
+    s += `<rect x="${px - pfostenBpx/2}" y="${pfostenObenY}" width="${pfostenBpx}" height="${bodenY - pfostenObenY}" fill="var(--viz-pfosten)" stroke="#000" stroke-width="0.5"/>`;
+  }
+  // Pfosten-Label
+  s += labelBox(offX + 8, pfostenObenY + (bodenY - pfostenObenY)/2 + 3, 'Pfosten ' + Math.round(pfLen_niedrig_fertig_cm) + ' cm', 'start');
+
+  // Satteldach: Querbalken in der Seitenansicht als vertikale dashes (quer ins Bild)
+  if (dachform === 'sattel' && qbAnzahl > 0) {
+    const qbYStart = pfostenObenY;
+    const qbYEnd = pfostenObenY + pfetteHpx + 4;
+    for (let i = 0; i < qbAnzahl; i++) {
+      const t = (i + 1) / (qbAnzahl + 1);
+      const qbX = innerX + t * innerW;
+      s += `<line x1="${qbX}" y1="${qbYStart}" x2="${qbX}" y2="${qbYEnd}" stroke="var(--viz-kopfband)" stroke-width="2" stroke-dasharray="3,2"/>`;
+    }
+  }
+
+  // Maße
+  s += bemassung(innerX, bodenY + 30, innerX + innerW, bodenY + 30, L + ' cm (Länge)', 'h');
+  s += bemassung(offX, bodenY + 52, offX + w, bodenY + 52, totalL + ' cm (über alles)', 'h');
+  s += bemassung(offX - 45, pfostenObenY, offX - 45, bodenY, Math.round(pH) + ' cm', 'v');
+
+  // Titel
+  const ansichtText = (dachform === 'pult') ? 'Seitenansicht (niedrige Seite)' : 'Seitenansicht';
+  s += `<text x="${offX + w/2}" y="${Math.max(18, offY - 8)}" text-anchor="middle" fill="var(--heading)" font-size="13" font-weight="600">${ansichtText} · ${seitenPfAnz} Pfosten sichtbar</text>`;
+
+  s += legende([
+    { farbe: 'var(--viz-hauptdach)', text: 'Dach' },
+    { farbe: 'var(--viz-pfette)', text: 'Pfette' },
+    { farbe: 'var(--viz-pfosten)', text: 'Pfosten' }
+  ], 15, 478);
+
+  svg.innerHTML = s;
+}
+
+function bemassung(x1, y1, x2, y2, label, dir) {
+  const color = 'var(--viz-mass)';
+  let s = '';
+  s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="1"/>`;
+  // Endmarken
+  if (dir === 'h') {
+    s += `<line x1="${x1}" y1="${y1-4}" x2="${x1}" y2="${y1+4}" stroke="${color}" stroke-width="1"/>`;
+    s += `<line x1="${x2}" y1="${y2-4}" x2="${x2}" y2="${y2+4}" stroke="${color}" stroke-width="1"/>`;
+    s += `<text x="${(x1+x2)/2}" y="${y1-4}" text-anchor="middle" fill="${color}" font-size="11">${label}</text>`;
+  } else {
+    s += `<line x1="${x1-4}" y1="${y1}" x2="${x1+4}" y2="${y1}" stroke="${color}" stroke-width="1"/>`;
+    s += `<line x1="${x2-4}" y1="${y2}" x2="${x2+4}" y2="${y2}" stroke="${color}" stroke-width="1"/>`;
+    s += `<text x="${x1-6}" y="${(y1+y2)/2}" text-anchor="end" fill="${color}" font-size="11">${label}</text>`;
+  }
+  return s;
+}
+
+function legende(items, x, y) {
+  let s = `<rect x="${x-6}" y="${y-14}" width="${items.length*100+10}" height="22" fill="var(--bg-sub)" stroke="var(--border)" stroke-width="1" rx="3"/>`;
+  items.forEach((it, i) => {
+    const ix = x + i * 100;
+    s += `<rect x="${ix}" y="${y-8}" width="12" height="10" fill="${it.farbe}"/>`;
+    s += `<text x="${ix+16}" y="${y+1}" fill="var(--text)" font-size="11">${it.text}</text>`;
+  });
+  return s;
+}
+
+// ============================================================
+// JSON EXPORT / IMPORT
+// ============================================================
+function sammleDaten() {
+  return {
+    laenge: num('laenge'),
+    breite: num('breite'),
+    dachform: str('dachform'),
+    neigung: num('neigung'),
+    ue_pfetten: num('ue_pfetten'),
+    ue_sparren: num('ue_sparren'),
+    hoehen_bezug: str('hoehen_bezug'),
+    ziel_hoehe: num('ziel_hoehe'),
+    sparrenabstand: num('sparrenabstand'),
+    pfosten_anzahl: num('pfosten_anzahl'),
+    verankerung: str('verankerung'),
+    kopfband_aktiv: bool('kopfband_aktiv'),
+    kopfband_ausstell: num('kopfband_ausstell'),
+    kopfband_anzahl: num('kopfband_anzahl'),
+    querbalken_anzahl: num('querbalken_anzahl'),
+    qs_pfosten:      { b: num('qs_pfosten_b'),      h: num('qs_pfosten_h'),      sk: str('qs_pfosten_sk') },
+    qs_kopfband:     { b: num('qs_kopfband_b'),     h: num('qs_kopfband_h'),     sk: str('qs_kopfband_sk') },
+    qs_sparren:      { b: num('qs_sparren_b'),      h: num('qs_sparren_h'),      sk: str('qs_sparren_sk') },
+    qs_pfette1:      { b: num('qs_pfette1_b'),      h: num('qs_pfette1_h'),      sk: str('qs_pfette1_sk') },
+    qs_pfette2:      { b: num('qs_pfette2_b'),      h: num('qs_pfette2_h'),      sk: str('qs_pfette2_sk') },
+    qs_firstpfette:  { b: num('qs_firstpfette_b'),  h: num('qs_firstpfette_h'),  sk: str('qs_firstpfette_sk') },
+    qs_querbalken:   { b: num('qs_querbalken_b'),   h: num('qs_querbalken_h'),   sk: str('qs_querbalken_sk') },
+    qs_firststuetze: { b: num('qs_firststuetze_b'), h: num('qs_firststuetze_h'), sk: str('qs_firststuetze_sk') },
+    zuschlag_holz: num('zuschlag_holz'),
+    sicherheit_sparren: str('sicherheit_sparren'),
+    custom_parts: customParts.map(c => ({
+      name: c.name, anzahl: c.anzahl, einzel: c.einzel,
+      lfm: c.lfm, flaeche: c.flaeche, b: c.b, h: c.h, sk: c.sk
+    }))
+  };
+}
+
+function setzeDaten(data) {
+  const setVal = (id, v) => { const el = $(id); if (el && v !== undefined && v !== null) el.value = v; };
+  const setChk = (id, v) => { const el = $(id); if (el && v !== undefined && v !== null) el.checked = !!v; };
+
+  setVal('laenge', data.laenge);
+  setVal('breite', data.breite);
+  setVal('dachform', data.dachform);
+  setVal('neigung', data.neigung);
+
+  // Neue Keys mit Rückwärts-Kompatibilität (alte Export-Dateien)
+  setVal('ue_pfetten', data.ue_pfetten !== undefined ? data.ue_pfetten : data.ue_laengs);
+  setVal('ue_sparren', data.ue_sparren !== undefined ? data.ue_sparren : data.ue_quer);
+  setVal('hoehen_bezug', data.hoehen_bezug || 'uk_pfette');
+  setVal('ziel_hoehe', data.ziel_hoehe !== undefined ? data.ziel_hoehe : data.pfosten_hoehe);
+
+  setVal('sparrenabstand', data.sparrenabstand);
+  setVal('pfosten_anzahl', data.pfosten_anzahl);
+  setVal('verankerung', data.verankerung);
+  setChk('kopfband_aktiv', data.kopfband_aktiv);
+  setVal('kopfband_ausstell', data.kopfband_ausstell);
+  setVal('kopfband_anzahl', data.kopfband_anzahl);
+  setVal('querbalken_anzahl', data.querbalken_anzahl);
+
+  const qsKeys = ['pfosten','kopfband','sparren','pfette1','pfette2','firstpfette','querbalken','firststuetze'];
+  qsKeys.forEach(k => {
+    const q = data['qs_' + k];
+    if (q) {
+      setVal('qs_' + k + '_b', q.b);
+      setVal('qs_' + k + '_h', q.h);
+      // Altlast: 'C24' → 'KVH' mappen (Excel-Kompatibilität)
+      let sk = q.sk;
+      if (sk === 'C24') sk = 'KVH';
+      setVal('qs_' + k + '_sk', sk);
+    }
+  });
+
+  setVal('zuschlag_holz', data.zuschlag_holz);
+  setVal('sicherheit_sparren', data.sicherheit_sparren);
+
+  customParts = (data.custom_parts || []).map((c) => ({
+    id: ++customIdCounter,
+    name: c.name || 'Eigenes Bauteil',
+    anzahl: +c.anzahl || 0,
+    einzel: +c.einzel || 0,
+    lfm: +c.lfm || 0,
+    flaeche: +c.flaeche || 0,
+    b: +c.b || 0,
+    h: +c.h || 0,
+    sk: (c.sk === 'C24' ? 'KVH' : (c.sk || 'KVH'))
+  }));
+  renderCustomParts();
+}
+
+$('btn_export').addEventListener('click', () => {
+  const pkg = {
+    tool: TOOL,
+    version: VERSION,
+    exportedAt: new Date().toISOString(),
+    data: sammleDaten()
+  };
+  const blob = new Blob([JSON.stringify(pkg, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'carport_' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+
+$('btn_import').addEventListener('click', () => $('file_import').click());
+$('file_import').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const fr = new FileReader();
+  fr.onload = ev => {
+    try {
+      const pkg = JSON.parse(ev.target.result);
+      if (pkg.tool && pkg.tool !== TOOL) {
+        if (pkg.tool === 'dach') {
+          alert('Diese Datei gehört zum Dach-Kalkulator (tool="dach"). Sie kann hier nicht importiert werden.');
+        } else if (pkg.tool === 'combined') {
+          // Multi-Projekt: suche das carport-Projekt
+          const proj = (pkg.projects || []).find(p => p.tool === TOOL);
+          if (proj) { setzeDaten(proj.data); calculate(); return; }
+          alert('Datei enthält keine Carport-Daten.');
+        } else {
+          alert('Unbekannter Tool-Typ: ' + pkg.tool);
+        }
+        return;
+      }
+      if (!pkg.data) throw new Error('Keine data-Struktur gefunden.');
+      setzeDaten(pkg.data);
+      calculate();
+    } catch (err) {
+      alert('Fehler beim Import: ' + err.message);
+    }
+  };
+  fr.readAsText(f);
+  e.target.value = '';
+});
+
+$('btn_print').addEventListener('click', () => window.print());
+
+// ============================================================
+// EVENT-BINDINGS
+// ============================================================
+qsa('#accordion input, #accordion select').forEach(el => {
+  el.addEventListener('input', calculate);
+  el.addEventListener('change', calculate);
+});
+
+// ============================================================
+// INIT
+// ============================================================
+// WICHTIG: Theme zuerst setzen (ohne calculate), dann initial-render, dann calc.
+applyTheme('auto', false);
+renderCustomParts();
+calculate();
+
+})();
+</script>
+
+</body>
+</html>
